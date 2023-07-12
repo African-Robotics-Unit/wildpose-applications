@@ -1,6 +1,8 @@
 import os
 import glob
+import time
 from pprint import pprint
+import open3d as o3d
 
 from utils.file_loader import load_config_file, load_pcd
 from utils.format_conversion import get_timestamp_from_pcd_fpath
@@ -25,6 +27,10 @@ def main():
     ])
     assert len(pcd_fpaths) == len(pcd_mask_fpaths) == len(timestamps)
 
+    # prepare the open3d viewer
+    vis = o3d.visualization.Visualizer()
+    vis.create_window()
+
     for (pcd_fpath, pcd_mask_fpath, timestamp) in zip(
         pcd_fpaths, pcd_mask_fpaths, timestamps
     ):
@@ -36,7 +42,16 @@ def main():
         pass
 
         # show the PCD in the viewer
-        pass
+        vis.add_geometry(pcd)
+        vis.update_geometry(pcd)
+        vis.poll_events()
+        vis.update_renderer()
+
+        time.sleep(0.5)  # Sleep for a while to simulate video frame rate
+
+        vis.remove_geometry(pcd)
+
+    vis.destroy_window()
 
 
 if __name__ == '__main__':
