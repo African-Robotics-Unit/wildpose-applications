@@ -1,7 +1,6 @@
 import os
 import glob
 import time
-import json
 import open3d as o3d
 import numpy as np
 
@@ -9,32 +8,44 @@ from utils.file_loader import load_config_file, load_pcd
 from utils.format_conversion import get_timestamp_from_pcd_fpath
 
 
-def save_view_point(pcd, filename):
-    vis = o3d.visualization.Visualizer()
-    vis.create_window()
-    vis.add_geometry(pcd)
-    vis.run()  # user changes the view and press "q" to terminate
-    param = vis.get_view_control().convert_to_pinhole_camera_parameters()
-    o3d.io.write_pinhole_camera_parameters(filename, param)
-    vis.destroy_window()
+class KeyEvent:
+    def __init__(self, pcd_fpaths, pcd_mask_fpaths, timestamps, pcd_mode):
+        self.pcd_fpaths = pcd_fpaths
+        self.pcd_mask_fpaths = pcd_mask_fpaths
+        self.timestamps = timestamps
+        self.current_pcd = None
+        self.pcd_idx = 0
+        self.pcd_mode = pcd_mode
 
+    def update_pcd(self, vis):
+        # reset the scene
+        viewpoint_param = vis.get_view_control().convert_to_pinhole_camera_parameters()
+        if self.current_pcd is not None:
+            vis.remove_geometry(self.current_pcd)
 
-def load_view_point(pcd, filename):
-    vis = o3d.visualization.Visualizer()
-    vis.create_window()
-    ctr = vis.get_view_control()
-    param = o3d.io.read_pinhole_camera_parameters(filename)
-    vis.add_geometry(pcd)
-    ctr.convert_from_pinhole_camera_parameters(param)
-    vis.run()
-    vis.destroy_window()
+        # load new pcd file
+        pcd = load_pcd(self.pcd_fpaths[self.pcd_idx], mode=self.pcd_mode)
+        pcd_mask = load_pcd(
+            self.pcd_mask_fpaths[self.pcd_idx], mode=self.pcd_mode)
+        self.current_pcd = pcd
+
+        # update the scene
+        vis.add_geometry(self.current_pcd)
+        vis.get_view_control().convert_from_pinhole_camera_parameters(viewpoint_param)
+
+        self.increment_pcd_index()
+        return True
+
+    def increment_pcd_index(self,):
+        self.pcd_idx += 1
+        if len(self.pcd_fpaths) <= self.pcd_idx:
+            self.pcd_idx %= len(self.pcd_fpaths)
 
 
 def main():
     # args
     config_fpath = 'config.hjson'
     pcd_mode = 'open3d'
-    viewpoint_fpath = 'viewpoint.json'
 
     # load the config file
     config = load_config_file(config_fpath)
@@ -50,54 +61,18 @@ def main():
     ])
     assert len(pcd_fpaths) == len(pcd_mask_fpaths) == len(timestamps)
 
-    # set the viewpoint
-    pcd = load_pcd(pcd_fpaths[0], mode=pcd_mode)
-    if not os.path.exists(viewpoint_fpath):
-        save_view_point(pcd, viewpoint_fpath)
-
     # prepare the open3d viewer
-    vis = o3d.visualization.Visualizer()
-    vis.create_window()
-    ctr = vis.get_view_control()
-    viewpoint_param = o3d.io.read_pinhole_camera_parameters(viewpoint_fpath)
-
-    # prepare the coordinate frame
-    max_values = np.array(pcd.points).max(axis=0)
-    coord_frame = o3d.geometry.LineSet(
-        points=o3d.utility.Vector3dVector([
-            [0, 0, 0],
-            [max_values[0], 0, 0],
-            [0, max_values[1], 0],
-            [0, 0, max_values[2]],
-        ]),
-        lines=o3d.utility.Vector2iVector([[0, 1], [0, 2], [0, 3]]),
+    event_handler = KeyEvent(
+        pcd_fpaths,
+        pcd_mask_fpaths,
+        timestamps,
+        pcd_mode=pcd_mode,
     )
-    coord_frame.paint_uniform_color(np.array([1, 0, 0]))
-
-    for i, (pcd_fpath, pcd_mask_fpath, timestamp) in enumerate(zip(
-        pcd_fpaths, pcd_mask_fpaths, timestamps
-    )):
-        # load pcd files
-        pcd = load_pcd(pcd_fpath, mode=pcd_mode)
-        pcd_mask = load_pcd(pcd_mask_fpath, mode=pcd_mode)
-
-        # pick the target dots up
-        pass
-
-        # show the PCD in the viewer
-        vis.add_geometry(coord_frame)
-        vis.add_geometry(pcd)
-        ctr.convert_from_pinhole_camera_parameters(viewpoint_param)
-        vis.poll_events()
-        vis.update_renderer()
-
-        time.sleep(0.1)  # Sleep for a while to simulate video frame rate
-
-        o3d.io.write_pinhole_camera_parameters(
-            viewpoint_fpath,
-            ctr.convert_to_pinhole_camera_parameters()
-        )
-        vis.remove_geometry(pcd)
+    vis = o3d.visualization.VisualizerWithKeyCallback()
+    vis.create_window()
+    vis.register_key_callback(32, event_handler.update_pcd)
+    vis.add_geometry(load_pcd(pcd_fpaths[0], mode=pcd_mode))
+    vis.run()
 
     vis.destroy_window()
 
