@@ -3,6 +3,7 @@ import glob
 import time
 import json
 import open3d as o3d
+import numpy as np
 
 from utils.file_loader import load_config_file, load_pcd
 from utils.format_conversion import get_timestamp_from_pcd_fpath
@@ -50,8 +51,8 @@ def main():
     assert len(pcd_fpaths) == len(pcd_mask_fpaths) == len(timestamps)
 
     # set the viewpoint
+    pcd = load_pcd(pcd_fpaths[0], mode=pcd_mode)
     if not os.path.exists(viewpoint_fpath):
-        pcd = load_pcd(pcd_fpaths[0], mode=pcd_mode)
         save_view_point(pcd, viewpoint_fpath)
 
     # prepare the open3d viewer
@@ -59,6 +60,19 @@ def main():
     vis.create_window()
     ctr = vis.get_view_control()
     viewpoint_param = o3d.io.read_pinhole_camera_parameters(viewpoint_fpath)
+
+    # prepare the coordinate frame
+    max_values = np.array(pcd.points).max(axis=0)
+    coord_frame = o3d.geometry.LineSet(
+        points=o3d.utility.Vector3dVector([
+            [0, 0, 0],
+            [max_values[0], 0, 0],
+            [0, max_values[1], 0],
+            [0, 0, max_values[2]],
+        ]),
+        lines=o3d.utility.Vector2iVector([[0, 1], [0, 2], [0, 3]]),
+    )
+    coord_frame.paint_uniform_color(np.array([1, 0, 0]))
 
     for i, (pcd_fpath, pcd_mask_fpath, timestamp) in enumerate(zip(
         pcd_fpaths, pcd_mask_fpaths, timestamps
@@ -71,6 +85,7 @@ def main():
         pass
 
         # show the PCD in the viewer
+        vis.add_geometry(coord_frame)
         vis.add_geometry(pcd)
         ctr.convert_from_pinhole_camera_parameters(viewpoint_param)
         vis.poll_events()
@@ -78,6 +93,10 @@ def main():
 
         time.sleep(0.1)  # Sleep for a while to simulate video frame rate
 
+        o3d.io.write_pinhole_camera_parameters(
+            viewpoint_fpath,
+            ctr.convert_to_pinhole_camera_parameters()
+        )
         vis.remove_geometry(pcd)
 
     vis.destroy_window()
