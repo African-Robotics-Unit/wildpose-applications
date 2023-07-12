@@ -1,17 +1,39 @@
 import os
 import glob
 import time
-from pprint import pprint
+import json
 import open3d as o3d
 
 from utils.file_loader import load_config_file, load_pcd
 from utils.format_conversion import get_timestamp_from_pcd_fpath
 
 
+def save_view_point(pcd, filename):
+    vis = o3d.visualization.Visualizer()
+    vis.create_window()
+    vis.add_geometry(pcd)
+    vis.run()  # user changes the view and press "q" to terminate
+    param = vis.get_view_control().convert_to_pinhole_camera_parameters()
+    o3d.io.write_pinhole_camera_parameters(filename, param)
+    vis.destroy_window()
+
+
+def load_view_point(pcd, filename):
+    vis = o3d.visualization.Visualizer()
+    vis.create_window()
+    ctr = vis.get_view_control()
+    param = o3d.io.read_pinhole_camera_parameters(filename)
+    vis.add_geometry(pcd)
+    ctr.convert_from_pinhole_camera_parameters(param)
+    vis.run()
+    vis.destroy_window()
+
+
 def main():
     # args
     config_fpath = 'config.hjson'
     pcd_mode = 'open3d'
+    viewpoint_fpath = 'viewpoint.json'
 
     # load the config file
     config = load_config_file(config_fpath)
@@ -27,13 +49,20 @@ def main():
     ])
     assert len(pcd_fpaths) == len(pcd_mask_fpaths) == len(timestamps)
 
+    # set the viewpoint
+    if not os.path.exists(viewpoint_fpath):
+        pcd = load_pcd(pcd_fpaths[0], mode=pcd_mode)
+        save_view_point(pcd, viewpoint_fpath)
+
     # prepare the open3d viewer
     vis = o3d.visualization.Visualizer()
     vis.create_window()
+    ctr = vis.get_view_control()
+    viewpoint_param = o3d.io.read_pinhole_camera_parameters(viewpoint_fpath)
 
-    for (pcd_fpath, pcd_mask_fpath, timestamp) in zip(
+    for i, (pcd_fpath, pcd_mask_fpath, timestamp) in enumerate(zip(
         pcd_fpaths, pcd_mask_fpaths, timestamps
-    ):
+    )):
         # load pcd files
         pcd = load_pcd(pcd_fpath, mode=pcd_mode)
         pcd_mask = load_pcd(pcd_mask_fpath, mode=pcd_mode)
@@ -43,11 +72,11 @@ def main():
 
         # show the PCD in the viewer
         vis.add_geometry(pcd)
-        vis.update_geometry(pcd)
+        ctr.convert_from_pinhole_camera_parameters(viewpoint_param)
         vis.poll_events()
         vis.update_renderer()
 
-        time.sleep(0.5)  # Sleep for a while to simulate video frame rate
+        time.sleep(0.1)  # Sleep for a while to simulate video frame rate
 
         vis.remove_geometry(pcd)
 
