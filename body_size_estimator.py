@@ -25,12 +25,29 @@ class KeyEvent:
 
         # load new pcd file
         pcd = load_pcd(self.pcd_fpaths[self.pcd_idx], mode=self.pcd_mode)
-        pcd_mask = load_pcd(
-            self.pcd_mask_fpaths[self.pcd_idx], mode=self.pcd_mode)
+        pcd_mask = np.load(self.pcd_mask_fpaths[self.pcd_idx])
+
+        # pick the target dots up
         self.current_pcd = pcd
+
+        # get the principal line
+        pcd_np = np.asarray(pcd.points)
+        mean = np.mean(pcd_np, axis=0)
+        centered_data = pcd_np - mean
+        u, s, vh = np.linalg.svd(centered_data, full_matrices=True)
+        first_principal_component = vh[0, :]
+
+        # generate points along the principal line
+        line_points = mean + first_principal_component * \
+            np.mgrid[-1:2:2][:, np.newaxis]
+        line_set = o3d.geometry.LineSet(
+            points=o3d.utility.Vector3dVector(line_points),
+            lines=o3d.utility.Vector2iVector([[0, 1]])
+        )
 
         # update the scene
         vis.add_geometry(self.current_pcd)
+        vis.add_geometry(line_set)
         vis.get_view_control().convert_from_pinhole_camera_parameters(viewpoint_param)
 
         self.increment_pcd_index()
@@ -54,7 +71,8 @@ def main():
     all_pcd_fpaths = sorted(glob.glob(
         os.path.join(config['textured_pcd_folder'], '*.pcd')))
     pcd_fpaths = sorted([f for f in all_pcd_fpaths if '_mask.pcd' not in f])
-    pcd_mask_fpaths = sorted([f for f in all_pcd_fpaths if '_mask.pcd' in f])
+    pcd_mask_fpaths = sorted(glob.glob(
+        os.path.join(config['textured_pcd_folder'], '*_mask.npy')))
     timestamps = sorted([
         get_timestamp_from_pcd_fpath(f)
         for f in pcd_fpaths
