@@ -110,6 +110,9 @@ def main():
     vis.create_window()
     vis.register_key_callback(32, event_handler.update_pcd)
     vis.add_geometry(init_geometry)
+    opt = vis.get_render_option()
+    opt.show_coordinate_frame = True
+    opt.background_color = np.asarray([0.7, 0.7, 0.7])
     vis.poll_events()
     vis.run()
 
