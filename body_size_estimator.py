@@ -24,7 +24,6 @@ class KeyEvent:
         if self.current_pcd is not None:
             self.current_pcd.points = o3d.utility.Vector3dVector([])
             self.current_pcd.colors = o3d.utility.Vector3dVector([])
-            # vis.remove_geometry(self.current_pcd)
 
         # load new pcd file
         pcd = load_pcd(self.pcd_fpaths[self.pcd_idx], mode=self.pcd_mode)
@@ -39,8 +38,19 @@ class KeyEvent:
         ground_mask = np.ones_like(pcd_mask)
         ground_mask[inliers] = 0
 
+        # Compute rotation matrix to align the normal of the ground plane to
+        # Z-axis
+        normal = plane_model[:3]
+        up = np.array([0.0, 1.0, 0.0])
+        rotation_axis = np.cross(normal, up)
+        rotation_axis = rotation_axis / np.linalg.norm(rotation_axis)
+        rotation_angle = np.arccos(
+            np.dot(normal, up) / (np.linalg.norm(normal) * np.linalg.norm(up)))
+        rotation_matrix = o3d.geometry.get_rotation_matrix_from_axis_angle(
+            rotation_angle * rotation_axis)
+        pcd.rotate(rotation_matrix)
+
         # pick the target dots up
-        self.current_pcd = pcd
         points = np.asarray(pcd.points)
         colors = np.asarray(pcd.colors)
         combined_mask = (ground_mask == 1) & (pcd_mask == 1)
@@ -64,6 +74,7 @@ class KeyEvent:
         )
 
         # update the scene
+        self.current_pcd = pcd
         vis.add_geometry(self.current_pcd)
         vis.add_geometry(line_set)
         vis.get_view_control().convert_from_pinhole_camera_parameters(viewpoint_param)
