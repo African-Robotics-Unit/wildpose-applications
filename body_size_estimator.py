@@ -9,29 +9,47 @@ from utils.format_conversion import get_timestamp_from_pcd_fpath
 
 
 class KeyEvent:
-    def __init__(self, pcd_fpaths, pcd_mask_fpaths, timestamps, pcd_mode):
+    def __init__(self, pcd_fpaths, pcd_mask_fpaths,
+                 timestamps, pcd_mode, init_geometry=None):
         self.pcd_fpaths = pcd_fpaths
         self.pcd_mask_fpaths = pcd_mask_fpaths
         self.timestamps = timestamps
-        self.current_pcd = None
         self.pcd_idx = 0
         self.pcd_mode = pcd_mode
+        self.current_pcd = init_geometry
 
     def update_pcd(self, vis):
         # reset the scene
         viewpoint_param = vis.get_view_control().convert_to_pinhole_camera_parameters()
         if self.current_pcd is not None:
-            vis.remove_geometry(self.current_pcd)
+            self.current_pcd.points = o3d.utility.Vector3dVector([])
+            self.current_pcd.colors = o3d.utility.Vector3dVector([])
+            # vis.remove_geometry(self.current_pcd)
 
         # load new pcd file
         pcd = load_pcd(self.pcd_fpaths[self.pcd_idx], mode=self.pcd_mode)
-        pcd_mask = np.load(self.pcd_mask_fpaths[self.pcd_idx])
+        # 0 - background
+        # 1... - animal IDs
+        pcd_mask = np.load(self.pcd_mask_fpaths[self.pcd_idx])  # [N,]
+
+        # Remove ground plane
+        plane_model, inliers = pcd.segment_plane(distance_threshold=0.01,
+                                                 ransac_n=3,
+                                                 num_iterations=1000)
+        ground_mask = np.ones_like(pcd_mask)
+        ground_mask[inliers] = 0
 
         # pick the target dots up
         self.current_pcd = pcd
+        points = np.asarray(pcd.points)
+        colors = np.asarray(pcd.colors)
+        combined_mask = (ground_mask == 1) & (pcd_mask == 1)
+        animal_points = points[combined_mask, :]
+        colors[combined_mask, :] = [1, 0, 0]
+        self.current_pcd.colors = o3d.utility.Vector3dVector(colors)
 
-        # get the principal line
-        pcd_np = np.asarray(pcd.points)
+        # Get the principal line of the non-ground plane
+        pcd_np = animal_points
         mean = np.mean(pcd_np, axis=0)
         centered_data = pcd_np - mean
         u, s, vh = np.linalg.svd(centered_data, full_matrices=True)
@@ -80,16 +98,19 @@ def main():
     assert len(pcd_fpaths) == len(pcd_mask_fpaths) == len(timestamps)
 
     # prepare the open3d viewer
+    init_geometry = load_pcd(pcd_fpaths[0], mode=pcd_mode)
     event_handler = KeyEvent(
         pcd_fpaths,
         pcd_mask_fpaths,
         timestamps,
         pcd_mode=pcd_mode,
+        init_geometry=init_geometry
     )
     vis = o3d.visualization.VisualizerWithKeyCallback()
     vis.create_window()
     vis.register_key_callback(32, event_handler.update_pcd)
-    vis.add_geometry(load_pcd(pcd_fpaths[0], mode=pcd_mode))
+    vis.add_geometry(init_geometry)
+    vis.poll_events()
     vis.run()
 
     vis.destroy_window()
