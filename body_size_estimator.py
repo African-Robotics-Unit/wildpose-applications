@@ -3,6 +3,8 @@ import glob
 import time
 import open3d as o3d
 import numpy as np
+import matplotlib.pyplot as plt
+from tqdm import tqdm
 
 from utils.file_loader import load_config_file, load_pcd
 from utils.format_conversion import get_timestamp_from_pcd_fpath
@@ -17,6 +19,20 @@ class KeyEvent:
         self.pcd_idx = 0
         self.pcd_mode = pcd_mode
         self.current_pcd = init_geometry
+
+        self.body_heights = [0] * len(self.pcd_fpaths)
+
+    def get_plot(self, vis):
+        for i in tqdm(range(len(self.pcd_fpaths))):
+            self.pcd_idx = i
+            self.update_pcd(vis)
+
+        fig, ax = plt.subplots()
+        ax.plot(self.timestamps, self.body_heights)
+        ax.set_xlabel('Timestamp')
+        ax.set_ylabel('Diff of Body Height')
+        plt.show()
+        return True
 
     def update_pcd(self, vis):
         # reset the scene
@@ -39,7 +55,7 @@ class KeyEvent:
         ground_mask[inliers] = 0
 
         # Compute rotation matrix to align the normal of the ground plane to
-        # Z-axis
+        # Y-axis
         normal = plane_model[:3]
         up = np.array([0.0, 1.0, 0.0])
         rotation_axis = np.cross(normal, up)
@@ -50,13 +66,15 @@ class KeyEvent:
             rotation_angle * rotation_axis)
         pcd.rotate(rotation_matrix)
 
-        # pick the target dots up
+        # pick the target dots up and change the color
         points = np.asarray(pcd.points)
         colors = np.asarray(pcd.colors)
         combined_mask = (ground_mask == 1) & (pcd_mask == 1)
         animal_points = points[combined_mask, :]
         colors[combined_mask, :] = [1, 0, 0]
         self.current_pcd.colors = o3d.utility.Vector3dVector(colors)
+        self.body_heights[self.pcd_idx] = \
+            np.max(animal_points[:, 1]) - np.min(animal_points[:, 1])
 
         # Get the principal line of the non-ground plane
         pcd_np = animal_points
@@ -64,8 +82,6 @@ class KeyEvent:
         centered_data = pcd_np - mean
         u, s, vh = np.linalg.svd(centered_data, full_matrices=True)
         first_principal_component = vh[0, :]
-
-        # generate points along the principal line
         line_points = mean + first_principal_component * \
             np.mgrid[-1:2:2][:, np.newaxis]
         line_set = o3d.geometry.LineSet(
@@ -119,7 +135,9 @@ def main():
     )
     vis = o3d.visualization.VisualizerWithKeyCallback()
     vis.create_window()
-    vis.register_key_callback(32, event_handler.update_pcd)
+    vis.register_key_callback(77, event_handler.get_plot)  # m in GLFW_KEY
+    vis.register_key_callback(
+        32, event_handler.update_pcd)  # space in GLFW_KEY
     vis.add_geometry(init_geometry)
     opt = vis.get_render_option()
     opt.show_coordinate_frame = True
