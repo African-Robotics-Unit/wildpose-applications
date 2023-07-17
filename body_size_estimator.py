@@ -135,9 +135,9 @@ def main():
     )
     vis = o3d.visualization.VisualizerWithKeyCallback()
     vis.create_window()
-    vis.register_key_callback(77, event_handler.get_plot)  # m in GLFW_KEY
-    vis.register_key_callback(
-        32, event_handler.update_pcd)  # space in GLFW_KEY
+    # register key callback functions with GLFW_KEY
+    vis.register_key_callback(77, event_handler.get_plot)  # m
+    vis.register_key_callback(32, event_handler.update_pcd)  # space
     vis.add_geometry(init_geometry)
     opt = vis.get_render_option()
     opt.show_coordinate_frame = True
