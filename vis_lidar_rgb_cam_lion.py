@@ -8,6 +8,7 @@ import glob
 import os
 import pdb
 import json
+from tqdm import tqdm
 from pyquaternion import Quaternion
 
 COLORS = [
@@ -283,20 +284,17 @@ def extract_rgb_from_image_pure(
     return colors, valid_mask
 
 
-def visualize_open3d(pcd_with_rgb, obj_pos_colors,
+def visualize_open3d(vis, pcd_with_rgb, obj_pos_colors,
                      obj_dict, cam_plotter=None, obj_points=[]):
-    vis = o3d.visualization.Visualizer()
-    vis.create_window()
-    view_ctl = vis.get_view_control()  # Set the viewpoint
 
     all_pcd = o3d.geometry.PointCloud()
     all_pcd.points = o3d.utility.Vector3dVector(pcd_with_rgb[:, :3])
     all_pcd.colors = o3d.utility.Vector3dVector(pcd_with_rgb[:, 3:])
+    vis.clear_geometries()
 
     if cam_plotter is not None:
         vis.add_geometry(cam_plotter)
     vis.add_geometry(all_pcd)
-    view_ctl = vis.get_view_control()
 
     if len(obj_points) > 0:
 
@@ -321,17 +319,15 @@ def visualize_open3d(pcd_with_rgb, obj_pos_colors,
                 vis.add_geometry(mesh_on_surface)
             # pdb.set_trace()
             # meshes.append(mesh_on_surface)
-    parameters = o3d.io.read_pinhole_camera_parameters("param_lion.json")
-    view_ctl.convert_from_pinhole_camera_parameters(parameters)
+    viewpoint_param = o3d.io.read_pinhole_camera_parameters("viewpoint.json")
+    vis.get_view_control().convert_from_pinhole_camera_parameters(viewpoint_param)
 
     # vis.run()
     vis.poll_events()
     vis.update_renderer()
     vis.capture_screen_image("tmp.png")
-    vis.destroy_window()
 
     img = cv2.imread('tmp.png')
-
     width, height = img.shape[1], img.shape[0]
 
     cut_length_left = int(width / 5)
@@ -404,44 +400,40 @@ def visualize_opencv(img, pcd_in_image, obj_masks,
 
 
 def sync_lidar_and_rgb(file_path_lidar, file_path_rgb):
-
-    rgb_files = os.listdir(file_path_rgb)
-    lidar_files = os.listdir(file_path_lidar)
+    rgb_fpaths = sorted(glob.glob(os.path.join(file_path_rgb, '*.jpeg')))
+    lidar_fpaths = sorted(glob.glob(os.path.join(file_path_lidar, '*.pcd')))
 
     rgb_list = []
     lidar_list = []
 
-    for fp in rgb_files:
+    for rgb_fpath in rgb_fpaths:
+        rgb_filename = os.path.basename(rgb_fpath).split('.')[0]
+        second_rgb, decimal_rgb = rgb_filename.split('_')[1:3]
 
-        if '.jpeg' in fp:
+        second_rgb = int(second_rgb)
+        decimal_rgb = float('0.' + decimal_rgb)
+        rgb_timestamp = second_rgb + decimal_rgb
 
-            second_rgb, decimal_rgb = fp.split('.')[0].split('_')[1:3]
+        diff_list = []
+        lidar_fp_list = []
+        for lidar_fpath in lidar_fpaths:
+            lidar_filename = os.path.basename(lidar_fpath).split('.')[0]
+            _, _, second_lidar, decimal_lidar = lidar_filename.split('_')
+            second_lidar = int(second_lidar)
+            decimal_lidar = float('0.' + decimal_lidar)
 
-            second_rgb, decimal_rgb = int(
-                second_rgb), float('0.' + decimal_rgb)
-            rgb_timestamp = second_rgb + decimal_rgb
+            lidar_timestamp = second_lidar + decimal_lidar
+            diff = abs(rgb_timestamp - lidar_timestamp)
 
-            diff_list = []
-            lidar_fp_list = []
-            for fp_lidar in lidar_files:
+            diff_list.append(diff)
+            lidar_fp_list.append(lidar_fpath)
 
-                _, _, second_lidar, decimal_lidar = fp_lidar.split('.')[
-                    0].split('_')
-                second_lidar, decimal_lidar = int(
-                    second_lidar), float('0.' + decimal_lidar)
+        diff_list = np.array(diff_list)
+        matching_lidar_file = lidar_fp_list[np.argmin(diff_list)]
 
-                lidar_timestamp = second_lidar + decimal_lidar
-                diff = abs(rgb_timestamp - lidar_timestamp)
-
-                diff_list.append(diff)
-                lidar_fp_list.append(fp_lidar)
-
-            diff_list = np.array(diff_list)
-            matching_lidar_file = lidar_fp_list[np.argmin(diff_list)]
-
-            rgb_list.append(file_path_rgb + fp)
-            assert os.path.exists(file_path_lidar + matching_lidar_file)
-            lidar_list.append(file_path_lidar + matching_lidar_file)
+        rgb_list.append(rgb_fpath)
+        assert os.path.exists(matching_lidar_file)
+        lidar_list.append(matching_lidar_file)
 
     return lidar_list, rgb_list
 
@@ -521,7 +513,7 @@ def get_2D_gt(gt_json_path):
         bbox = anno['bbox']
         img_id = anno['image_id']
         obj_id = anno['category_id']
-        img_filename = images[img_id]['file_name'].split('/')[-1]
+        img_filename = os.path.basename(images[img_id]['file_name'])
 
         if img_filename not in img_dict:
             img_dict[img_filename] = []
@@ -545,10 +537,10 @@ cam_plotter.points = o3d.utility.Vector3dVector(cam_plotter_pose)
 cam_plotter.lines = o3d.utility.Vector2iVector(camera_plot_lines)
 cam_plotter.colors = o3d.utility.Vector3dVector(cam_plotter_colors)
 
-
-file_path_lidar = 'lion_sleep3/lion_sleep3/lidar/'
-file_path_rgb = 'lion_sleep3/lion_sleep3/sync_rgb/'
-file_path_mask = 'lion_sleep3/lion_sleep3/masks_lion2/'
+data_dir = 'data/lion_sleep3'
+file_path_lidar = os.path.join(data_dir, 'lidar/')
+file_path_rgb = os.path.join(data_dir, 'sync_rgb/')
+file_path_mask = os.path.join(data_dir, 'masks_lion2/')
 
 
 lidar_list, rgb_list = sync_lidar_and_rgb(file_path_lidar, file_path_rgb)
@@ -562,43 +554,43 @@ intrinsic: 18250.0,18250.0,745.0,370.0
 '''
 # rot_mat = quaternion.as_rotation_matrix(quaternion.from_float_array(np.array([0.5, 0.5, 0.5000000000000001,0.5 ])))
 
-cam_params = json.load(open('manual_calibration.json', 'r'))
-rot_mat = quaternion.as_rotation_matrix(quaternion.from_float_array(np.array(
-    [cam_params['extrinsics_R'][0], -cam_params['extrinsics_R'][1], -cam_params['extrinsics_R'][2], cam_params['extrinsics_R'][3]])))
-translation = np.array([cam_params['extrinsics_t'][0],
-                        cam_params['extrinsics_t'][1],
-                        cam_params['extrinsics_t'][2]])
+cam_params = json.load(open(
+    os.path.join(data_dir, 'manual_calibration.json'), 'r'))
+rot_mat = quaternion.as_rotation_matrix(quaternion.from_float_array(np.array([
+    cam_params['extrinsics_R'][0],
+    -cam_params['extrinsics_R'][1],
+    -cam_params['extrinsics_R'][2],
+    cam_params['extrinsics_R'][3]])))
+translation = np.array(cam_params['extrinsics_t'])
 
-fx, fy, cx, cy = cam_params['intrinsics'][0], cam_params['intrinsics'][
-    1], cam_params['intrinsics'][2], cam_params['intrinsics'][3]
+fx, fy, cx, cy = cam_params['intrinsics']
 IMG_WIDTH, IMG_HEIGHT = 1280, 720
 
 OUTPUT_WIDTH, OUTPUT_HEIGHT = 3840, 720
 FPS = 4
-OUTPUT_VIDEO_PATH = 'output_lion_.avi'
+OUTPUT_VIDEO_PATH = os.path.join(data_dir, 'output.avi')
+output_dir = os.path.join(data_dir, 'textured_pcds/')
 
 font = cv2.FONT_HERSHEY_SIMPLEX
 fontScale = 1
 color = (255, 0, 0)
 thickness = 2
 
+vis = o3d.visualization.Visualizer()
+vis.create_window()
 
-img_dict = get_2D_gt('labeling_lione/train.json')
+img_dict = get_2D_gt(os.path.join(data_dir, 'train.json'))
 fourcc = cv2.VideoWriter_fourcc(*'XVID')
 out = cv2.VideoWriter(OUTPUT_VIDEO_PATH, fourcc, FPS,
                       (OUTPUT_WIDTH, OUTPUT_HEIGHT))
-save_path = 'lion_pcds/'
-for idx in range(len(rgb_list)):
-
+for idx in tqdm(range(len(rgb_list))):
     # if idx > 100:
     #    break
     rgb_path = rgb_list[idx]
 
     lidar_path = lidar_list[idx]
     mask_idx = np.load(file_path_mask + '{0}.npy'.format(idx))
-    key = rgb_path.split('/')[-1]
-    print('writing {0}/{1} - {2}, {3}'.format(idx,
-          len(rgb_list), rgb_path, lidar_path))
+    key = os.path.basename(rgb_path)
 
     pcd_in_lidar = o3d.io.read_point_cloud(lidar_path)
     pcd_in_lidar = np.asarray(pcd_in_lidar.points)
@@ -632,16 +624,19 @@ for idx in range(len(rgb_list)):
 
     # pcd_for_save_mask = o3d.geometry.PointCloud()
     # pcd_for_save_mask.points = o3d.utility.Vector3dVector(pcd_with_rgb_save[:,:3])
-
+    file_prefix = rgb_path.split('/')[-1].split('.')[0]
     o3d.io.write_point_cloud(
-        save_path + rgb_path.split('/')[-1].split('.')[0] + '.pcd', pcd_for_save_rgb)
-    np.save(save_path + rgb_path.split('/')
-            [-1].split('.')[0] + '_mask.npy', obj_mask_from_color)
+        os.path.join(output_dir, file_prefix + '.pcd'),
+        pcd_for_save_rgb)
+    np.save(
+        os.path.join(output_dir, file_prefix + '_mask.npy'),
+        obj_mask_from_color)
 
     pcd_with_rgb = np.concatenate([pcd_in_cam, colors], 1)
     pcd_in_image = pcd_in_image[valid_mask]
 
     pcd_img = visualize_open3d(
+        vis,
         pcd_with_rgb,
         obj_pos_colors,
         img_dict[key],
@@ -657,8 +652,10 @@ for idx in range(len(rgb_list)):
 
     if rgb_path.split('/')[-1] in img_dict:
         img_draw = np.copy(img_bgr)
-        cv2.putText(img_draw, 'Frame Number: {0}'.format(
-            idx), (20, 40), font, 1, (255, 255, 255), thickness, cv2.LINE_AA)
+        cv2.putText(
+            img_draw,
+            'Frame Number: {0}'.format(idx),
+            (20, 40), font, 1, (255, 255, 255), thickness, cv2.LINE_AA)
 
         for obj_idx in range(len(img_dict[key])):
 
@@ -692,33 +689,29 @@ for idx in range(len(rgb_list)):
             cv2.putText(
                 img_draw,
                 str(obj_id),
-                (x1 + 5,
-                 y1 - 5),
+                (x1 + 5, y1 - 5),
                 font,
                 fontScale,
-                (color_BGR[0],
-                 color_BGR[1],
-                    color_BGR[2]),
+                tuple(color_BGR),
                 thickness,
                 cv2.LINE_AA)
 
             # obj_pos_colors.append([loc3d[0], loc3d[1], loc3d[2], color_RGB[0]/255.0, color_RGB[1]/255.0, color_RGB[2]/255.0])
 
             # Drawing box
-            cv2.rectangle(img_valid_mask, (x1, y1), (x1 + width, y1 +
-                          height), (color_BGR[0], color_BGR[1], color_BGR[2]), 3)
-            cv2.rectangle(img_valid_mask, (x1, y1 - 30), (x1 + 50, y1),
+            cv2.rectangle(img_valid_mask,
+                          (x1, y1), (x1 + width, y1 + height),
+                          (color_BGR[0], color_BGR[1], color_BGR[2]), 3)
+            cv2.rectangle(img_valid_mask,
+                          (x1, y1 - 30), (x1 + 50, y1),
                           (color_BGR[0], color_BGR[1], color_BGR[2]), 2)
             cv2.putText(
                 img_valid_mask,
                 str(obj_id),
-                (x1 + 5,
-                 y1 - 5),
+                (x1 + 5, y1 - 5),
                 font,
                 fontScale,
-                (color_BGR[0],
-                 color_BGR[1],
-                    color_BGR[2]),
+                tuple(color_BGR),
                 thickness,
                 cv2.LINE_AA)
 
@@ -729,5 +722,6 @@ for idx in range(len(rgb_list)):
     merged_img = np.concatenate([pcd_img, img_valid_mask, img_draw], 1)
     out.write(merged_img)
 
-
+vis.destroy_window()
 out.release()
+cv2.destroyAllWindows()
