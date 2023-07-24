@@ -10,6 +10,13 @@ from utils.file_loader import load_config_file, load_pcd
 from utils.format_conversion import get_timestamp_from_pcd_fpath
 
 
+def plane2point_distance(plane, point):
+    pt_vec = np.ones(4)
+    pt_vec[:3] = point
+    plane = np.array(plane)
+    return np.abs(plane @ pt_vec) / np.linalg.norm(pt_vec[:3])
+
+
 class KeyEvent:
     def __init__(self, pcd_fpaths, pcd_mask_fpaths,
                  timestamps, pcd_mode, init_geometry=None):
@@ -20,7 +27,7 @@ class KeyEvent:
         self.pcd_mode = pcd_mode
         self.current_pcd = init_geometry
 
-        self.body_heights = [0] * len(self.pcd_fpaths)
+        self.record_values = [0] * len(self.pcd_fpaths)
 
     def get_plot(self, vis):
         for i in tqdm(range(len(self.pcd_fpaths))):
@@ -28,7 +35,7 @@ class KeyEvent:
             self.update_pcd(vis)
 
         fig, ax = plt.subplots()
-        ax.plot(self.timestamps, self.body_heights)
+        ax.plot(self.timestamps, self.record_values)
         ax.set_xlabel('Timestamp')
         ax.set_ylabel('Diff of Body Height')
         plt.show()
@@ -64,7 +71,6 @@ class KeyEvent:
             np.dot(normal, up) / (np.linalg.norm(normal) * np.linalg.norm(up)))
         rotation_matrix = o3d.geometry.get_rotation_matrix_from_axis_angle(
             rotation_angle * rotation_axis)
-        pcd.rotate(rotation_matrix)
 
         # pick the target dots up and change the color
         points = np.asarray(pcd.points)
@@ -73,26 +79,14 @@ class KeyEvent:
         animal_points = points[combined_mask, :]
         colors[combined_mask, :] = [1, 0, 0]
         self.current_pcd.colors = o3d.utility.Vector3dVector(colors)
-        self.body_heights[self.pcd_idx] = \
-            np.max(animal_points[:, 1]) - np.min(animal_points[:, 1])
-
-        # Get the principal line of the non-ground plane
-        pcd_np = animal_points
-        mean = np.mean(pcd_np, axis=0)
-        centered_data = pcd_np - mean
-        u, s, vh = np.linalg.svd(centered_data, full_matrices=True)
-        first_principal_component = vh[0, :]
-        line_points = mean + first_principal_component * \
-            np.mgrid[-1:2:2][:, np.newaxis]
-        line_set = o3d.geometry.LineSet(
-            points=o3d.utility.Vector3dVector(line_points),
-            lines=o3d.utility.Vector2iVector([[0, 1]])
-        )
+        for i in range(animal_points.shape[0]):
+            self.record_values[self.pcd_idx] += plane2point_distance(
+                plane_model, animal_points[i, :])
 
         # update the scene
+        pcd.rotate(rotation_matrix)
         self.current_pcd = pcd
         vis.add_geometry(self.current_pcd)
-        vis.add_geometry(line_set)
         vis.get_view_control().convert_from_pinhole_camera_parameters(viewpoint_param)
 
         self.increment_pcd_index()
