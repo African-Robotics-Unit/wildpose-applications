@@ -5,6 +5,7 @@ import open3d as o3d
 import numpy as np
 import matplotlib.pyplot as plt
 from tqdm import tqdm
+import pandas as pd
 
 from utils.file_loader import load_config_file, load_pcd
 from utils.format_conversion import get_timestamp_from_pcd_fpath
@@ -19,9 +20,11 @@ def plane2point_distance(plane, point):
 
 class KeyEvent:
     def __init__(self, pcd_fpaths, pcd_mask_fpaths,
+                 labels,
                  timestamps, pcd_mode, init_geometry=None):
         self.pcd_fpaths = pcd_fpaths
         self.pcd_mask_fpaths = pcd_mask_fpaths
+        self.labels = labels
         self.timestamps = timestamps
         self.pcd_idx = 0
         self.pcd_mode = pcd_mode
@@ -36,8 +39,21 @@ class KeyEvent:
 
         fig, ax = plt.subplots()
         ax.plot(self.timestamps, self.record_values, '-o')
+        ymin, ymax = ax.get_ylim()
+        ax.vlines(
+            x=[t for i, t in enumerate(
+                self.timestamps) if self.labels[i] == 1],
+            ymin=ymin, ymax=ymax,
+            colors='red', ls='--'
+        )
+        ax.vlines(
+            x=[t for i, t in enumerate(
+                self.timestamps) if self.labels[i] == -1],
+            ymin=ymin, ymax=ymax,
+            colors='blue', ls='--'
+        )
         ax.set_xlabel('Timestamp')
-        ax.set_ylabel('Diff of Body Height')
+        ax.set_ylabel('Diff of Body Volume')
         plt.show()
         return True
 
@@ -78,7 +94,7 @@ class KeyEvent:
         combined_mask = (ground_mask == 1) & (pcd_mask == 1)
         animal_points = points[combined_mask, :]
         colors[combined_mask, :] = [1, 0, 0]
-        self.current_pcd.colors = o3d.utility.Vector3dVector(colors) 
+        self.current_pcd.colors = o3d.utility.Vector3dVector(colors)
         self.record_values[self.pcd_idx] = 0
         for i in range(animal_points.shape[0]):
             self.record_values[self.pcd_idx] += plane2point_distance(
@@ -110,21 +126,26 @@ def main():
 
     # get file paths of textured point cloud
     all_pcd_fpaths = sorted(glob.glob(
-        os.path.join(config['textured_pcd_folder'], '*.pcd')))
+        os.path.join(config['scene_folder'], 'textured_pcds', '*.pcd')))
     pcd_fpaths = sorted([f for f in all_pcd_fpaths if '_mask.pcd' not in f])
     pcd_mask_fpaths = sorted(glob.glob(
-        os.path.join(config['textured_pcd_folder'], '*_mask.npy')))
+        os.path.join(config['scene_folder'], 'textured_pcds', '*_mask.npy')))
     timestamps = sorted([
         get_timestamp_from_pcd_fpath(f)
         for f in pcd_fpaths
     ])
-    assert len(pcd_fpaths) == len(pcd_mask_fpaths) == len(timestamps)
+    df = pd.read_excel(os.path.join(config['scene_folder'], 'body_state.xlsx'))
+    labels = df['state']
+    labels = labels.where(pd.notnull(labels), None).tolist()
+    assert len(pcd_fpaths) == len(
+        pcd_mask_fpaths) == len(timestamps) == len(labels)
 
     # prepare the open3d viewer
     init_geometry = load_pcd(pcd_fpaths[0], mode=pcd_mode)
     event_handler = KeyEvent(
         pcd_fpaths,
         pcd_mask_fpaths,
+        labels,
         timestamps,
         pcd_mode=pcd_mode,
         init_geometry=init_geometry
