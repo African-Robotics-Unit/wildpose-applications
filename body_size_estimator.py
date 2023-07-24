@@ -35,7 +35,7 @@ class KeyEvent:
             self.update_pcd(vis)
 
         fig, ax = plt.subplots()
-        ax.plot(self.timestamps, self.record_values)
+        ax.plot(self.timestamps, self.record_values, '-o')
         ax.set_xlabel('Timestamp')
         ax.set_ylabel('Diff of Body Height')
         plt.show()
@@ -78,7 +78,8 @@ class KeyEvent:
         combined_mask = (ground_mask == 1) & (pcd_mask == 1)
         animal_points = points[combined_mask, :]
         colors[combined_mask, :] = [1, 0, 0]
-        self.current_pcd.colors = o3d.utility.Vector3dVector(colors)
+        self.current_pcd.colors = o3d.utility.Vector3dVector(colors) 
+        self.record_values[self.pcd_idx] = 0
         for i in range(animal_points.shape[0]):
             self.record_values[self.pcd_idx] += plane2point_distance(
                 plane_model, animal_points[i, :])
@@ -88,6 +89,7 @@ class KeyEvent:
         self.current_pcd = pcd
         vis.add_geometry(self.current_pcd)
         vis.get_view_control().convert_from_pinhole_camera_parameters(viewpoint_param)
+        print(os.path.basename(self.pcd_fpaths[self.pcd_idx]))
 
         self.increment_pcd_index()
         return True
