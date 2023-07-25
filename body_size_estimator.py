@@ -137,8 +137,7 @@ def main():
     df = pd.read_excel(os.path.join(config['scene_folder'], 'body_state.xlsx'))
     labels = df['state']
     labels = labels.where(pd.notnull(labels), None).tolist()
-    assert len(pcd_fpaths) == len(
-        pcd_mask_fpaths) == len(timestamps) == len(labels)
+    assert len(pcd_fpaths) == len(pcd_mask_fpaths) == len(labels)
 
     # prepare the open3d viewer
     init_geometry = load_pcd(pcd_fpaths[0], mode=pcd_mode)
