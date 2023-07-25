@@ -41,14 +41,14 @@ class KeyEvent:
         ax.plot(self.timestamps, self.record_values, '-o')
         ymin, ymax = ax.get_ylim()
         ax.vlines(
-            x=[t for i, t in enumerate(
-                self.timestamps) if self.labels[i] == 1],
+            x=[t for i, t in enumerate(self.timestamps)
+               if self.labels[i] == 1],
             ymin=ymin, ymax=ymax,
             colors='red', ls='--'
         )
         ax.vlines(
-            x=[t for i, t in enumerate(
-                self.timestamps) if self.labels[i] == -1],
+            x=[t for i, t in enumerate(self.timestamps)
+               if self.labels[i] == -1],
             ymin=ymin, ymax=ymax,
             colors='blue', ls='--'
         )
