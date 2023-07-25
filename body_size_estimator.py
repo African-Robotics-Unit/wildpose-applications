@@ -1,4 +1,5 @@
 import os
+import json
 import glob
 import open3d as o3d
 import numpy as np
@@ -6,7 +7,7 @@ import matplotlib.pyplot as plt
 from tqdm import tqdm
 import pandas as pd
 
-from utils.file_loader import load_config_file, load_pcd
+from utils.file_loader import load_config_file, load_pcd, load_camera_parameters
 from utils.format_conversion import get_timestamp_from_pcd_fpath
 
 
@@ -123,20 +124,25 @@ def main():
     # load the config file
     config = load_config_file(config_fpath)
 
-    # get file paths of textured point cloud
-    all_pcd_fpaths = sorted(glob.glob(
-        os.path.join(config['scene_folder'], 'textured_pcds', '*.pcd')))
-    pcd_fpaths = sorted([f for f in all_pcd_fpaths if '_mask.pcd' not in f])
-    pcd_mask_fpaths = sorted(glob.glob(
-        os.path.join(config['scene_folder'], 'textured_pcds', '*_mask.npy')))
+    # load data file paths
+    pcd_fpaths = sorted(glob.glob(
+        os.path.join(config['scene_dir'], config['pcd_dir'], '*.pcd')))
+    img_fpaths = sorted(glob.glob(
+        os.path.join(config['scene_dir'], config['sync_rgb_dir'], '*.jpeg')))
     timestamps = sorted([
         get_timestamp_from_pcd_fpath(f)
         for f in pcd_fpaths
     ])
-    df = pd.read_excel(os.path.join(config['scene_folder'], 'body_state.xlsx'))
+    df = pd.read_excel(os.path.join(config['scene_dir'], 'body_state.xlsx'))
     labels = df['state']
     labels = labels.where(pd.notnull(labels), None).tolist()
-    assert len(pcd_fpaths) == len(pcd_mask_fpaths) == len(labels)
+    assert len(pcd_fpaths) == len(img_fpaths) == len(labels)
+
+    # load camera parameters
+    calib_fpth = os.path.join(config['scene_dir'], 'manual_calibration.json')
+    fx, fy, cx, cy, rot_mat, translation = load_camera_parameters(calib_fpth)
+
+    # TODO
 
     # prepare the open3d viewer
     init_geometry = load_pcd(pcd_fpaths[0], mode=pcd_mode)
