@@ -385,7 +385,7 @@ def main():
         pcd_colors, valid_mask_save = extract_rgb_from_image_pure(
             pcd_in_img, rgb_img, width=IMG_WIDTH, height=IMG_HEIGHT)
         pcd_with_rgb_save = np.concatenate([pcd_in_cam, pcd_colors], 1)
-        pcd_with_rgb_save = pcd_with_rgb_save[valid_mask_save]
+        pcd_with_rgb_save = pcd_with_rgb_save[valid_mask_save]  # [N, 6]
         pcd_for_save_rgb = o3d.geometry.PointCloud()
         pcd_for_save_rgb.points = o3d.utility.Vector3dVector(
             pcd_with_rgb_save[:, :3])
