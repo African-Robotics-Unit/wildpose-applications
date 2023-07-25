@@ -1,15 +1,12 @@
 import cv2
 import numpy as np
 import open3d as o3d
-import pickle
-import rigid_body_motion as rbm
 import quaternion
 import glob
 import os
-import pdb
 import json
 from tqdm import tqdm
-from pyquaternion import Quaternion
+
 
 COLORS = [
     {"color": [220, 20, 60], "isthing": 1, "id": 1, "name": "person"},
@@ -163,7 +160,6 @@ COLORS = [
         "id": 199, "name": "wall-other-merged"},
     {"color": [250, 141, 255], "isthing": 0, "id": 200, "name": "rug-merged"},
 ]
-
 colors_indice = [0, 5, 10, 15, 20, 25, 30, 35, 13, 45, 50, 55, 60, 65, 70]
 
 
@@ -189,9 +185,9 @@ def make_extrinsic(rot_mat, translation):
 
 
 def lidar2cam_projection(pcd, extrinsic):
-    velo = np.insert(pcd, 3, 1, axis=1).T
-    velo = np.delete(velo, np.where(velo[0, :] < 0), axis=1)
-    pcd_in_cam = extrinsic.dot(velo)
+    tmp = np.insert(pcd, 3, 1, axis=1).T
+    tmp = np.delete(tmp, np.where(tmp[0, :] < 0), axis=1)
+    pcd_in_cam = extrinsic.dot(tmp)
 
     return pcd_in_cam
 
@@ -204,9 +200,6 @@ def cam2image_projection(pcd_in_cam, intrinsic):
 
 
 def get_3D_by_2Dloc(pcd_in_image, pcd_in_cam, loc_yx_2d, width, height):
-
-    # valid_mask = (pcd_in_image[:,0] >= 0) * (pcd_in_image[:,0] < width) * (pcd_in_image[:,1] >= 0) * (pcd_in_image[:,1] < height) * (pcd_in_image[:,2] > 0)
-
     pixel_locs = np.concatenate(
         [pcd_in_image[:, 1][:, None], pcd_in_image[:, 0][:, None]], 1)
     pixel_locs = pixel_locs.astype(int)
@@ -220,7 +213,7 @@ def get_3D_by_2Dloc(pcd_in_image, pcd_in_cam, loc_yx_2d, width, height):
 
 
 def extract_rgb_from_image(
-    pcd_in_image, pcd_in_cam, obj_masks, obj_dict, width, height
+    pcd_in_image, pcd_in_cam, rgb_img, obj_masks, obj_dict, width, height
 ):
 
     valid_mask = \
@@ -240,7 +233,7 @@ def extract_rgb_from_image(
     colors = np.zeros((len(pcd_in_image_valid), 3))
 
     obj_mask_from_color = np.zeros((len(pcd_in_image_valid)))
-    colors[:, :] = img[pixel_locs[:, 0], pixel_locs[:, 1]] / 255.0
+    colors[:, :] = rgb_img[pixel_locs[:, 0], pixel_locs[:, 1]] / 255.0
 
     obj_points = []
     for obj_idx in range(len(obj_masks)):
@@ -261,7 +254,7 @@ def extract_rgb_from_image(
     return colors, valid_mask, obj_points, obj_mask_from_color
 
 
-def extract_rgb_from_image_pure(pcd_in_img, width, height):
+def extract_rgb_from_image_pure(pcd_in_img, rgb_img, width, height):
     valid_mask = \
         (0 <= pcd_in_img[:, 0]) * (pcd_in_img[:, 0] < width) * \
         (0 <= pcd_in_img[:, 1]) * (pcd_in_img[:, 1] < height) * \
@@ -272,127 +265,12 @@ def extract_rgb_from_image_pure(pcd_in_img, width, height):
             pcd_in_img[valid_mask, 0][:, None]],
         axis=1)  # yx
     pixel_locs = pixel_locs.astype(int)
-    valid_locs = np.where(valid_mask)[0]
 
     pcd_colors = np.zeros((len(pcd_in_img), 3))
-    pcd_colors[valid_mask, :] = img[pixel_locs[:, 0], pixel_locs[:, 1]] / 255.0
+    pcd_colors[valid_mask, :] = rgb_img[pixel_locs[:, 0],
+                                        pixel_locs[:, 1]] / 255.0
 
     return pcd_colors, valid_mask
-
-
-def visualize_open3d(vis, pcd_with_rgb, obj_pos_colors,
-                     obj_dict, cam_plotter=None, obj_points=[]):
-
-    all_pcd = o3d.geometry.PointCloud()
-    all_pcd.points = o3d.utility.Vector3dVector(pcd_with_rgb[:, :3])
-    all_pcd.colors = o3d.utility.Vector3dVector(pcd_with_rgb[:, 3:])
-    vis.clear_geometries()
-
-    if cam_plotter is not None:
-        vis.add_geometry(cam_plotter)
-    vis.add_geometry(all_pcd)
-
-    if len(obj_points) > 0:
-
-        meshes = []
-        for mesh_idx in range(len(obj_points)):
-            _, obj_id = obj_dict[mesh_idx]
-            obj_pos = obj_points[mesh_idx]
-            color_RGB = COLORS[colors_indice[obj_id]]['color']
-            for p_idx in range(len(obj_pos)):
-
-                mesh_on_surface = o3d.geometry.TriangleMesh.create_sphere(
-                    radius=0.01)
-                mesh_on_surface.paint_uniform_color(
-                    [color_RGB[0] / 255.0, color_RGB[1] / 255.0, color_RGB[2] / 255.0])
-                q_mat = Quaternion(0, 0, 0, 1)
-                q_mat = q_mat.transformation_matrix
-
-                # x:-backward/ +forward, z : -left/ +right
-                q_mat[:3, -1] = np.array([obj_pos[p_idx, 0],
-                                         obj_pos[p_idx, 1], obj_pos[p_idx, 2]])
-                mesh_on_surface.transform(q_mat)
-                vis.add_geometry(mesh_on_surface)
-            # pdb.set_trace()
-            # meshes.append(mesh_on_surface)
-    viewpoint_param = o3d.io.read_pinhole_camera_parameters("viewpoint.json")
-    vis.get_view_control().convert_from_pinhole_camera_parameters(viewpoint_param)
-
-    # vis.run()
-    vis.poll_events()
-    vis.update_renderer()
-    vis.capture_screen_image("tmp.png")
-
-    img = cv2.imread('tmp.png')
-    width, height = img.shape[1], img.shape[0]
-
-    cut_length_left = int(width / 5)
-    cut_length_right = int(width / 5)
-    cut_length_top = int(height / 4)
-    cut_length_bottom = int(height / 9)
-    img = img[cut_length_top: -cut_length_bottom,
-              cut_length_left: -cut_length_right]
-
-    return img
-
-
-def visualize_opencv(img, pcd_in_image, obj_masks,
-                     obj_dict, width, height, use_mask=True):
-
-    img_bgr = cv2.cvtColor(img, cv2.COLOR_RGB2BGR)
-
-    valid_mask = (pcd_in_image[:,
-                               0] >= 0) * (pcd_in_image[:,
-                                                        0] < width) * (pcd_in_image[:,
-                                                                                    1] >= 0) * (pcd_in_image[:,
-                                                                                                             1] < height) * (pcd_in_image[:,
-                                                                                                                                          2] > 0)
-
-    pixel_locs = np.concatenate(
-        [pcd_in_image[valid_mask, 1][:, None], pcd_in_image[valid_mask, 0][:, None]], 1)
-    pixel_locs = pixel_locs.astype(int)
-
-    if use_mask == False:
-        img_mask = np.zeros((img.shape[0], img.shape[1], 1), dtype=np.uint8)
-        img_mask[pixel_locs[:, 0], pixel_locs[:, 1]] = 1
-        img_bgr *= img_mask
-        img_bgr_canvas = np.copy(img_bgr)
-
-        for valid_idx in range(len(pixel_locs)):
-
-            color = img_bgr[pixel_locs[valid_idx, 0], pixel_locs[valid_idx, 1]]
-
-            cv2.circle(img_bgr_canvas, (pixel_locs[valid_idx, 1], pixel_locs[valid_idx, 0]),
-                       3, (int(color[0]), int(color[1]), int(color[2])), -1)
-    else:
-        img_bgr_canvas = np.zeros(
-            (img.shape[0], img.shape[1], 3), dtype=np.uint8)
-
-        '''
-        for valid_idx in range(len(pixel_locs)):
-
-            color = img_bgr[pixel_locs[valid_idx,0],pixel_locs[valid_idx,1]]
-
-            cv2.circle(img_bgr_canvas, (pixel_locs[valid_idx,1], pixel_locs[valid_idx,0]),
-                                                                3, (int(color[0]), int(color[1]), int(color[2])), -1)
-        '''
-        valid_locs = np.where(valid_mask)[0]
-        for obj_idx in range(len(obj_masks)):
-            _, obj_id = obj_dict[obj_idx]
-            obj_mask = obj_masks[obj_idx, 0]
-            valid_locs_mask = np.where(
-                obj_mask[pixel_locs[:, 0], pixel_locs[:, 1]])
-
-            valid_locs_img = pixel_locs[valid_locs_mask[0]]
-            # valid_locs[valid_locs_mask]
-            color_RGB = COLORS[colors_indice[obj_id]]['color']
-            color_BGR = [color_RGB[2], color_RGB[1], color_RGB[0]]
-            # img_bgr_canvas[valid_locs_img[:,0],valid_locs_img[:,1],:] = 255
-            # pdb.set_trace()
-            for valid_idx in range(len(valid_locs_img)):
-                cv2.circle(img_bgr_canvas, (valid_locs_img[valid_idx, 1], valid_locs_img[valid_idx, 0]),
-                           5, (color_BGR[0], color_BGR[1], color_BGR[2]), -1)
-    return img_bgr_canvas
 
 
 def sync_lidar_and_rgb(file_path_lidar, file_path_rgb):
@@ -434,67 +312,6 @@ def sync_lidar_and_rgb(file_path_lidar, file_path_rgb):
     return lidar_list, rgb_list
 
 
-def construct_cam_plotter(scale=1.5, translation=(0, 0, 10)):
-    # Camera center is considered (0,0,0)
-    # Here we construct four edges of camera. This is only used for
-    # visualization.
-
-    top_left = np.array([-scale + translation[0],
-                         scale + translation[1],
-                         0.0 + translation[2]])  # Top Left one
-    top_right = np.array([scale +
-                          translation[0], scale +
-                          translation[1], -
-                          0.0 +
-                          translation[2]])  # Top Right one
-    bottom_left = np.array([-scale + translation[0], -scale +
-                           translation[1], 0.0 + translation[2]])  # Bottom Left one
-    bottom_right = np.array([scale +
-                             translation[0], -
-                             scale +
-                             translation[1], -
-                             0.0 +
-                             translation[2]])  # Bottom Right one
-    focal_point = np.array(
-        [0.0 + translation[0], 0.0 + translation[1], -scale * 2 + translation[2]])
-
-    cam_plotter_array = np.array(
-        [top_left, top_right, bottom_left, bottom_right, focal_point])
-
-    return cam_plotter_array
-
-
-def overlay(image, mask, color, alpha, resize=None):
-    """Combines image and its segmentation mask into a single image.
-    https://www.kaggle.com/code/purplejester/showing-samples-with-segmentation-mask-overlay
-
-    Params:
-        image: Training image. np.ndarray,
-        mask: Segmentation mask. np.ndarray,
-        color: Color for segmentation mask rendering.  tuple[int, int, int] = (255, 0, 0)
-        alpha: Segmentation mask's transparency. float = 0.5,
-        resize: If provided, both image and its mask are resized before blending them together.
-        tuple[int, int] = (1024, 1024))
-
-    Returns:
-        image_combined: The combined image. np.ndarray
-
-    """
-    color = color[::-1]
-    colored_mask = np.expand_dims(mask, 0).repeat(3, axis=0)
-    colored_mask = np.moveaxis(colored_mask, 0, -1)
-    masked = np.ma.MaskedArray(image, mask=colored_mask, fill_value=color)
-    image_overlay = masked.filled()
-
-    if resize is not None:
-        image = cv2.resize(image.transpose(1, 2, 0), resize)
-        image_overlay = cv2.resize(image_overlay.transpose(1, 2, 0), resize)
-
-    image_combined = cv2.addWeighted(image, 1 - alpha, image_overlay, alpha, 0)
-
-    return image_combined
-
-
 def get_2D_gt(gt_json_path):
 
     gt_json = json.load(open(gt_json_path, 'r'))
@@ -523,60 +340,30 @@ def main():
     file_path_lidar = os.path.join(data_dir, 'lidar/')
     file_path_rgb = os.path.join(data_dir, 'sync_rgb/')
     file_path_mask = os.path.join(data_dir, 'masks_lion2/')
-    cam_params = json.load(open(
-        os.path.join(data_dir, 'manual_calibration.json'), 'r'))
+    calib_fpth = os.path.join(data_dir, 'manual_calibration.json')
+    output_dir = os.path.join(data_dir, 'textured_pcds/')
 
-    camera_plot_lines = [
-        [4, 0], [4, 1], [4, 2], [4, 3],
-        [0, 1], [1, 3], [3, 2], [2, 0]
-    ]
-
-    cam_plotter_pose = construct_cam_plotter()
-    cam_plotter_colors = np.zeros((len(cam_plotter_pose), 3))
-
-    cam_plotter = o3d.geometry.LineSet()
-    cam_plotter_colors = np.zeros(cam_plotter_pose.shape)
-    cam_plotter_colors[:, 0] = 1.0
-
-    cam_plotter.points = o3d.utility.Vector3dVector(cam_plotter_pose)
-    cam_plotter.lines = o3d.utility.Vector2iVector(camera_plot_lines)
-    cam_plotter.colors = o3d.utility.Vector3dVector(cam_plotter_colors)
+    cam_params = json.load(open(calib_fpth, 'r'))
+    IMG_WIDTH, IMG_HEIGHT = 1280, 720
 
     lidar_list, rgb_list = sync_lidar_and_rgb(file_path_lidar, file_path_rgb)
 
-    rot_mat = quaternion.as_rotation_matrix(quaternion.from_float_array(np.array([
+    rot_mat = quaternion.as_rotation_matrix(quaternion.from_float_array(np.array([  # TODO
         cam_params['extrinsics_R'][0],
-        -cam_params['extrinsics_R'][1],
-        -cam_params['extrinsics_R'][2],
+        cam_params['extrinsics_R'][1],
+        cam_params['extrinsics_R'][2],
         cam_params['extrinsics_R'][3]])))
     translation = np.array(cam_params['extrinsics_t'])
 
     fx, fy, cx, cy = cam_params['intrinsics']
-    IMG_WIDTH, IMG_HEIGHT = 1280, 720
-
-    OUTPUT_WIDTH, OUTPUT_HEIGHT = 3840, 720
-    FPS = 4
-    OUTPUT_VIDEO_PATH = os.path.join(data_dir, 'output.avi')
-    output_dir = os.path.join(data_dir, 'textured_pcds/')
-
-    font = cv2.FONT_HERSHEY_SIMPLEX
-    fontScale = 1
-    color = (255, 0, 0)
-    thickness = 2
-
-    vis = o3d.visualization.Visualizer()
-    vis.create_window()
 
     img_dict = get_2D_gt(os.path.join(data_dir, 'train.json'))
-    fourcc = cv2.VideoWriter_fourcc(*'XVID')
-    out = cv2.VideoWriter(OUTPUT_VIDEO_PATH, fourcc, FPS,
-                          (OUTPUT_WIDTH, OUTPUT_HEIGHT))
     for idx in tqdm(range(len(rgb_list))):
         # load the frame image
         rgb_path = rgb_list[idx]
         key = os.path.basename(rgb_path)
-        img_bgr = cv2.imread(rgb_path)
-        img = cv2.cvtColor(img_bgr, cv2.COLOR_BGR2RGB)
+        bgr_img = cv2.imread(rgb_path)
+        rgb_img = cv2.cvtColor(bgr_img, cv2.COLOR_BGR2RGB)
         # load the image mask
         mask_idx = np.load(file_path_mask + '{0}.npy'.format(idx))
         # load point cloud of the frame
@@ -596,7 +383,7 @@ def main():
         pcd_in_img = pcd_in_img.T[:, :-1]
 
         pcd_colors, valid_mask_save = extract_rgb_from_image_pure(
-            pcd_in_img, width=IMG_WIDTH, height=IMG_HEIGHT)
+            pcd_in_img, rgb_img, width=IMG_WIDTH, height=IMG_HEIGHT)
         pcd_with_rgb_save = np.concatenate([pcd_in_cam, pcd_colors], 1)
         pcd_with_rgb_save = pcd_with_rgb_save[valid_mask_save]
         pcd_for_save_rgb = o3d.geometry.PointCloud()
@@ -606,7 +393,9 @@ def main():
             pcd_with_rgb_save[:, 3:])
 
         colors, valid_mask, obj_points_colors, obj_mask_from_color = extract_rgb_from_image(
-            pcd_in_img, pcd_in_cam, mask_idx, img_dict[key], width=IMG_WIDTH, height=IMG_HEIGHT)
+            pcd_in_img, pcd_in_cam, rgb_img, mask_idx, img_dict[key],
+            width=IMG_WIDTH,
+            height=IMG_HEIGHT)
 
         # pcd_for_save_mask = o3d.geometry.PointCloud()
         # pcd_for_save_mask.points = o3d.utility.Vector3dVector(pcd_with_rgb_save[:,:3])
