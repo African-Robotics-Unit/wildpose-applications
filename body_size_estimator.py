@@ -1,6 +1,9 @@
 import os
+import re
 import json
+import cv2
 import glob
+from typing import Any
 import open3d as o3d
 import numpy as np
 import matplotlib.pyplot as plt
@@ -9,6 +12,29 @@ import pandas as pd
 
 from utils.file_loader import load_config_file, load_pcd, load_camera_parameters
 from utils.format_conversion import get_timestamp_from_pcd_fpath
+from utils import camera as camera_utils
+import projection_functions
+
+
+def get_bbox_labels(gt_json_path):
+    gt_json = json.load(open(gt_json_path, 'r'))
+    img_dict = {}
+
+    annotations = gt_json['annotations']
+    images = gt_json['images']
+
+    for idx in range(len(annotations)):
+
+        anno = annotations[idx]
+        bbox = anno['bbox']
+        img_id = anno['image_id']
+        obj_id = anno['category_id']
+        img_filename = os.path.basename(images[img_id]['file_name'])
+
+        if img_filename not in img_dict:
+            img_dict[img_filename] = []
+        img_dict[img_filename].append([bbox, obj_id])
+    return img_dict
 
 
 def plane2point_distance(plane, point):
@@ -18,23 +44,38 @@ def plane2point_distance(plane, point):
     return np.abs(plane @ pt_vec) / np.linalg.norm(pt_vec[:3])
 
 
+class PointCloudPainter:
+    def __init__(self) -> None:
+        pass
+
+    def __call__(self, index: int, *args: Any, **kwds: Any) -> Any:
+        pass
+
+
 class KeyEvent:
-    def __init__(self, pcd_fpaths, pcd_mask_fpaths,
+    def __init__(self,
+                 img_fpaths, pcd_fpaths, mask_fpaths,
                  labels,
-                 timestamps, pcd_mode, init_geometry=None):
+                 timestamps,
+                 intrinsic_mat, extrinsic_mat,
+                 pcd_mode,
+                 init_geometry=None):
+        self.img_fpaths = img_fpaths
         self.pcd_fpaths = pcd_fpaths
-        self.pcd_mask_fpaths = pcd_mask_fpaths
+        self.mask_fpaths = mask_fpaths
         self.labels = labels
         self.timestamps = timestamps
-        self.pcd_idx = 0
+        self.idx = 0
         self.pcd_mode = pcd_mode
         self.current_pcd = init_geometry
+        self.intrinsic_mat = intrinsic_mat
+        self.extrinsic_mat = extrinsic_mat
 
         self.record_values = [0] * len(self.pcd_fpaths)
 
     def get_plot(self, vis):
         for i in tqdm(range(len(self.pcd_fpaths))):
-            self.pcd_idx = i
+            self.idx = i
             self.update_pcd(vis)
 
         fig, ax = plt.subplots()
@@ -64,11 +105,38 @@ class KeyEvent:
             self.current_pcd.points = o3d.utility.Vector3dVector([])
             self.current_pcd.colors = o3d.utility.Vector3dVector([])
 
-        # load new pcd file
-        pcd = load_pcd(self.pcd_fpaths[self.pcd_idx], mode=self.pcd_mode)
+        # load target files
+        bgr_img = cv2.imread(self.img_fpaths[self.idx])
+        rgb_img = cv2.cvtColor(bgr_img, cv2.COLOR_BGR2RGB)
+        pcd = load_pcd(self.pcd_fpaths[self.idx], mode=self.pcd_mode)
         # 0 - background
         # 1... - animal IDs
-        pcd_mask = np.load(self.pcd_mask_fpaths[self.pcd_idx])  # [N,]
+        pcd_mask = np.load(self.pcd_mask_fpaths[self.idx])  # [N,]
+
+        # project the point cloud to camera and its image sensor
+        pcd_in_cam = camera_utils.lidar2cam_projection(
+            pcd, self.extrinsic_mat)
+        pcd_in_img = camera_utils.cam2image_projection(
+            pcd_in_cam, self.intrinsic_mat)
+        pcd_in_cam = pcd_in_cam.T[:, :-1]
+        pcd_in_img = pcd_in_img.T[:, :-1]
+
+        # make the colored point cloud
+        _, img_height, img_width = rgb_img.shape
+        pcd_colors, valid_mask = projection_functions.extract_rgb_from_image_pure(
+            pcd_in_img, rgb_img, width=img_width, height=img_height)
+        rgb_pcd = np.concatenate([pcd_in_cam, pcd_colors], axis=1)
+        rgb_pcd = rgb_pcd[valid_mask]  # [N, 6]
+        pcd_for_save_rgb = o3d.geometry.PointCloud()
+        pcd_for_save_rgb.points = o3d.utility.Vector3dVector(
+            rgb_pcd[:, :3])
+        pcd_for_save_rgb.colors = o3d.utility.Vector3dVector(
+            rgb_pcd[:, 3:])
+
+        colors, valid_mask, obj_points_colors, obj_mask_from_color = projection_functions.extract_rgb_from_image(
+            pcd_in_img, pcd_in_cam, rgb_img, mask_idx, img_dict[key],
+            width=img_width,
+            height=img_height)
 
         # Remove ground plane
         plane_model, inliers = pcd.segment_plane(distance_threshold=0.01,
@@ -95,9 +163,9 @@ class KeyEvent:
         animal_points = points[combined_mask, :]
         colors[combined_mask, :] = [1, 0, 0]
         self.current_pcd.colors = o3d.utility.Vector3dVector(colors)
-        self.record_values[self.pcd_idx] = 0
+        self.record_values[self.idx] = 0
         for i in range(animal_points.shape[0]):
-            self.record_values[self.pcd_idx] += plane2point_distance(
+            self.record_values[self.idx] += plane2point_distance(
                 plane_model, animal_points[i, :])
 
         # update the scene
@@ -105,15 +173,15 @@ class KeyEvent:
         self.current_pcd = pcd
         vis.add_geometry(self.current_pcd)
         vis.get_view_control().convert_from_pinhole_camera_parameters(viewpoint_param)
-        print(os.path.basename(self.pcd_fpaths[self.pcd_idx]))
+        print(os.path.basename(self.pcd_fpaths[self.idx]))
 
         self.increment_pcd_index()
         return True
 
     def increment_pcd_index(self,):
-        self.pcd_idx += 1
-        if len(self.pcd_fpaths) <= self.pcd_idx:
-            self.pcd_idx %= len(self.pcd_fpaths)
+        self.idx += 1
+        if len(self.pcd_fpaths) <= self.idx:
+            self.idx %= len(self.pcd_fpaths)
 
 
 def main():
@@ -126,9 +194,13 @@ def main():
 
     # load data file paths
     pcd_fpaths = sorted(glob.glob(
-        os.path.join(config['scene_dir'], config['pcd_dir'], '*.pcd')))
+        os.path.join(config['pcd_dir'], '*.pcd')))
     img_fpaths = sorted(glob.glob(
-        os.path.join(config['scene_dir'], config['sync_rgb_dir'], '*.jpeg')))
+        os.path.join(config['sync_rgb_dir'], '*.jpeg')))
+    mask_fpaths = sorted([
+        f for f in os.listdir(config['mask_dir'])
+        if re.search(r'\d+\.npy$', f)
+    ], key=lambda x: int(x.split('.')[0]))
     timestamps = sorted([
         get_timestamp_from_pcd_fpath(f)
         for f in pcd_fpaths
@@ -136,21 +208,31 @@ def main():
     df = pd.read_excel(os.path.join(config['scene_dir'], 'body_state.xlsx'))
     labels = df['state']
     labels = labels.where(pd.notnull(labels), None).tolist()
-    assert len(pcd_fpaths) == len(img_fpaths) == len(labels)
+    assert len(pcd_fpaths) == len(img_fpaths) == len(
+        labels) == len(mask_fpaths)
 
     # load camera parameters
     calib_fpth = os.path.join(config['scene_dir'], 'manual_calibration.json')
     fx, fy, cx, cy, rot_mat, translation = load_camera_parameters(calib_fpth)
+
+    # get the bounding box labels
+    bbox_dict = get_bbox_labels(config['bbox_info_fpath'])
+
+    # project the point cloud to camera and its image sensor
+    intrinsic_mat = camera_utils.make_intrinsic_mat(fx, fy, cx, cy)
+    extrinsic_mat = camera_utils.make_extrinsic_mat(rot_mat, translation)
 
     # TODO
 
     # prepare the open3d viewer
     init_geometry = load_pcd(pcd_fpaths[0], mode=pcd_mode)
     event_handler = KeyEvent(
+        img_fpaths,
         pcd_fpaths,
-        pcd_mask_fpaths,
+        mask_fpaths,
         labels,
         timestamps,
+        intrinsic_mat, extrinsic_mat,
         pcd_mode=pcd_mode,
         init_geometry=init_geometry
     )

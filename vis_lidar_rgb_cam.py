@@ -397,8 +397,6 @@ def main():
             width=IMG_WIDTH,
             height=IMG_HEIGHT)
 
-        # pcd_for_save_mask = o3d.geometry.PointCloud()
-        # pcd_for_save_mask.points = o3d.utility.Vector3dVector(pcd_with_rgb_save[:,:3])
         file_prefix = rgb_path.split('/')[-1].split('.')[0]
         o3d.io.write_point_cloud(
             os.path.join(output_dir, file_prefix + '.pcd'),
