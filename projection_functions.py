@@ -153,41 +153,40 @@ COLORS = [
         "id": 199, "name": "wall-other-merged"},
     {"color": [250, 141, 255], "isthing": 0, "id": 200, "name": "rug-merged"},
 ]
-colors_indice = [0, 5, 10, 15, 20, 25, 30, 35, 13, 45, 50, 55, 60, 65, 70]
+colors_indices = [0, 5, 10, 15, 20, 25, 30, 35, 13, 45, 50, 55, 60, 65, 70]
 
 
 def extract_rgb_from_image(
-    pcd_in_image, pcd_in_cam, rgb_img, obj_masks, obj_dict, width, height
+    pcd_in_img, pcd_in_cam, rgb_img, seg_mask, obj_id, width, height
 ):
 
     valid_mask = \
-        (0 <= pcd_in_image[:, 0]) * (pcd_in_image[:, 0] < width) * \
-        (0 <= pcd_in_image[:, 1]) * (pcd_in_image[:, 1] < height) * \
-        (0 < pcd_in_image[:, 2])
+        (0 <= pcd_in_img[:, 0]) * (pcd_in_img[:, 0] < width) * \
+        (0 <= pcd_in_img[:, 1]) * (pcd_in_img[:, 1] < height) * \
+        (0 < pcd_in_img[:, 2])
 
     pixel_locs = np.concatenate(
-        [pcd_in_image[valid_mask, 1][:, None],
-         pcd_in_image[valid_mask, 0][:, None]],
+        [pcd_in_img[valid_mask, 1][:, None],
+         pcd_in_img[valid_mask, 0][:, None]],
         axis=1)  # yx
     pixel_locs = pixel_locs.astype(int)
     valid_locs = np.where(valid_mask)[0]
 
-    pcd_in_image_valid = pcd_in_image[valid_locs]
+    pcd_in_img_valid = pcd_in_img[valid_locs]
 
-    colors = np.zeros((len(pcd_in_image_valid), 3))
+    colors = np.zeros((len(pcd_in_img_valid), 3))
 
-    obj_mask_from_color = np.zeros((len(pcd_in_image_valid)))
+    obj_mask_from_color = np.zeros((len(pcd_in_img_valid)))
     colors[:, :] = rgb_img[pixel_locs[:, 0], pixel_locs[:, 1]] / 255.0
 
     obj_points = []
-    for obj_idx in range(len(obj_masks)):
-        _, obj_id = obj_dict[obj_idx]
-        obj_mask = obj_masks[obj_idx, 0]
+    for obj_idx in range(len(seg_mask)):
+        obj_mask = seg_mask[obj_idx, 0]
         valid_locs_mask = np.where(
             obj_mask[pixel_locs[:, 0], pixel_locs[:, 1]])
 
-        color_RGB = COLORS[colors_indice[obj_id]]['color']
-
+        # get color for the segmentation
+        color_RGB = COLORS[colors_indices[obj_id]]['color']
         colors[valid_locs_mask, 0] = color_RGB[0] / 255.0
         colors[valid_locs_mask, 1] = color_RGB[1] / 255.0
         colors[valid_locs_mask, 2] = color_RGB[2] / 255.0
@@ -206,7 +205,7 @@ def extract_rgb_from_image_pure(pcd_in_img, rgb_img, width, height):
 
     pixel_locs = np.concatenate(
         [pcd_in_img[valid_mask, 1][:, None],
-            pcd_in_img[valid_mask, 0][:, None]],
+         pcd_in_img[valid_mask, 0][:, None]],
         axis=1)  # yx
     pixel_locs = pixel_locs.astype(int)
 
@@ -215,3 +214,34 @@ def extract_rgb_from_image_pure(pcd_in_img, rgb_img, width, height):
                                         pixel_locs[:, 1]] / 255.0
 
     return pcd_colors, valid_mask
+
+
+def get_coloured_point_cloud(
+    pcd_in_img, rgb_img, seg_mask, obj_dict, width, height
+):
+    valid_mask = \
+        (0 <= pcd_in_img[:, 0]) * (pcd_in_img[:, 0] < width) * \
+        (0 <= pcd_in_img[:, 1]) * (pcd_in_img[:, 1] < height) * \
+        (0 < pcd_in_img[:, 2])
+
+    pixel_locs = np.concatenate(
+        [pcd_in_img[valid_mask, 1][:, None],
+         pcd_in_img[valid_mask, 0][:, None]],
+        axis=1)  # yx
+    pixel_locs = pixel_locs.astype(int)
+
+    pcd_colors = np.zeros((len(pcd_in_img), 3))
+    pcd_colors[valid_mask, :] = rgb_img[pixel_locs[:, 0],
+                                        pixel_locs[:, 1]] / 255.0
+
+    valid_locs = np.where(valid_mask)[0]
+    pcd_in_img_valid = pcd_in_img[valid_locs]
+    pcd_seg_mask = np.zeros(len(pcd_in_img_valid))
+    for obj_idx in range(len(seg_mask)):
+        _, obj_id = obj_dict[obj_idx]
+        obj_mask = seg_mask[obj_idx, 0]
+        valid_locs_mask = np.where(
+            obj_mask[pixel_locs[:, 0], pixel_locs[:, 1]])
+        pcd_seg_mask[valid_locs_mask] = obj_id
+
+    return pcd_colors, valid_mask, pcd_seg_mask

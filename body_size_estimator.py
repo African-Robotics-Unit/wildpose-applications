@@ -57,6 +57,7 @@ class KeyEvent:
                  img_fpaths, pcd_fpaths, mask_fpaths,
                  labels,
                  timestamps,
+                 bbox_dict,
                  intrinsic_mat, extrinsic_mat,
                  pcd_mode,
                  init_geometry=None):
@@ -68,6 +69,7 @@ class KeyEvent:
         self.idx = 0
         self.pcd_mode = pcd_mode
         self.current_pcd = init_geometry
+        self.bbox_dict = bbox_dict
         self.intrinsic_mat = intrinsic_mat
         self.extrinsic_mat = extrinsic_mat
 
@@ -106,37 +108,36 @@ class KeyEvent:
             self.current_pcd.colors = o3d.utility.Vector3dVector([])
 
         # load target files
-        bgr_img = cv2.imread(self.img_fpaths[self.idx])
+        img_fpath = self.img_fpaths[self.idx]
+        bgr_img = cv2.imread(img_fpath)
         rgb_img = cv2.cvtColor(bgr_img, cv2.COLOR_BGR2RGB)
         pcd = load_pcd(self.pcd_fpaths[self.idx], mode=self.pcd_mode)
+        pts = np.asarray(pcd.points)
         # 0 - background
         # 1... - animal IDs
-        pcd_mask = np.load(self.pcd_mask_fpaths[self.idx])  # [N,]
+        seg_mask = np.load(self.mask_fpaths[self.idx])
 
         # project the point cloud to camera and its image sensor
-        pcd_in_cam = camera_utils.lidar2cam_projection(
-            pcd, self.extrinsic_mat)
-        pcd_in_img = camera_utils.cam2image_projection(
-            pcd_in_cam, self.intrinsic_mat)
-        pcd_in_cam = pcd_in_cam.T[:, :-1]
-        pcd_in_img = pcd_in_img.T[:, :-1]
+        pts_in_cam = camera_utils.lidar2cam_projection(
+            pts, self.extrinsic_mat)
+        pts_in_img = camera_utils.cam2image_projection(
+            pts_in_cam, self.intrinsic_mat)
+        pts_in_cam = pts_in_cam.T[:, :-1]
+        pts_in_img = pts_in_img.T[:, :-1]
 
         # make the colored point cloud
-        _, img_height, img_width = rgb_img.shape
-        pcd_colors, valid_mask = projection_functions.extract_rgb_from_image_pure(
-            pcd_in_img, rgb_img, width=img_width, height=img_height)
-        rgb_pcd = np.concatenate([pcd_in_cam, pcd_colors], axis=1)
+        img_height, img_width, _ = rgb_img.shape
+        pcd_colors, valid_mask, pcd_mask = projection_functions.get_coloured_point_cloud(
+            pts_in_img, rgb_img, seg_mask,
+            self.bbox_dict[os.path.basename(img_fpath)],
+            width=img_width, height=img_height)
+        rgb_pcd = np.concatenate([pts_in_cam, pcd_colors], axis=1)
         rgb_pcd = rgb_pcd[valid_mask]  # [N, 6]
-        pcd_for_save_rgb = o3d.geometry.PointCloud()
-        pcd_for_save_rgb.points = o3d.utility.Vector3dVector(
+        pcd = o3d.geometry.PointCloud()
+        pcd.points = o3d.utility.Vector3dVector(
             rgb_pcd[:, :3])
-        pcd_for_save_rgb.colors = o3d.utility.Vector3dVector(
+        pcd.colors = o3d.utility.Vector3dVector(
             rgb_pcd[:, 3:])
-
-        colors, valid_mask, obj_points_colors, obj_mask_from_color = projection_functions.extract_rgb_from_image(
-            pcd_in_img, pcd_in_cam, rgb_img, mask_idx, img_dict[key],
-            width=img_width,
-            height=img_height)
 
         # Remove ground plane
         plane_model, inliers = pcd.segment_plane(distance_threshold=0.01,
@@ -197,10 +198,14 @@ def main():
         os.path.join(config['pcd_dir'], '*.pcd')))
     img_fpaths = sorted(glob.glob(
         os.path.join(config['sync_rgb_dir'], '*.jpeg')))
-    mask_fpaths = sorted([
-        f for f in os.listdir(config['mask_dir'])
-        if re.search(r'\d+\.npy$', f)
-    ], key=lambda x: int(x.split('.')[0]))
+    mask_fpaths = sorted(
+        [
+            os.path.join(config['mask_dir'], f)
+            for f in os.listdir(config['mask_dir'])
+            if re.search(r'\d+\.npy$', f)
+        ],
+        key=lambda x: int(os.path.basename(x).split('.')[0])
+    )
     timestamps = sorted([
         get_timestamp_from_pcd_fpath(f)
         for f in pcd_fpaths
@@ -222,8 +227,6 @@ def main():
     intrinsic_mat = camera_utils.make_intrinsic_mat(fx, fy, cx, cy)
     extrinsic_mat = camera_utils.make_extrinsic_mat(rot_mat, translation)
 
-    # TODO
-
     # prepare the open3d viewer
     init_geometry = load_pcd(pcd_fpaths[0], mode=pcd_mode)
     event_handler = KeyEvent(
@@ -232,6 +235,7 @@ def main():
         mask_fpaths,
         labels,
         timestamps,
+        bbox_dict,
         intrinsic_mat, extrinsic_mat,
         pcd_mode=pcd_mode,
         init_geometry=init_geometry

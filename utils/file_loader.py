@@ -40,8 +40,8 @@ def load_camera_parameters(path: str):
         cam_params = json.load(f)
     rot_mat = quaternion.as_rotation_matrix(quaternion.from_float_array(np.array([  # TODO
         cam_params['extrinsics_R'][0],
-        cam_params['extrinsics_R'][1],
-        cam_params['extrinsics_R'][2],
+        -cam_params['extrinsics_R'][1],
+        -cam_params['extrinsics_R'][2],
         cam_params['extrinsics_R'][3]])))
     translation = np.array(cam_params['extrinsics_t'])
     fx, fy, cx, cy = cam_params['intrinsics']
