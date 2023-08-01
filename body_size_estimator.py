@@ -9,6 +9,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 from tqdm import tqdm
 import pandas as pd
+import scipy as sp
 
 from utils.file_loader import load_config_file, load_pcd, load_camera_parameters
 from utils.format_conversion import get_timestamp_from_pcd_fpath
@@ -115,7 +116,15 @@ class KeyEvent:
         pts = np.asarray(pcd.points)
         # 0 - background
         # 1... - animal IDs
+        # [L, 1, H, W] where L is the number of object IDs
         seg_mask = np.load(self.mask_fpaths[self.idx])
+
+        # erode the mask
+        num_label = seg_mask.shape[0]
+        for i in range(num_label):
+            img2d = seg_mask[i, 0, :, :]
+            seg_mask[i, 0, :, :] = sp.ndimage.binary_erosion(
+                img2d, iterations=10)
 
         # project the point cloud to camera and its image sensor
         pts_in_cam = camera_utils.lidar2cam_projection(
@@ -165,9 +174,14 @@ class KeyEvent:
         colors[combined_mask, :] = [1, 0, 0]
         self.current_pcd.colors = o3d.utility.Vector3dVector(colors)
         self.record_values[self.idx] = 0
+        sum_v = 0
+        cnt_v = 0
         for i in range(animal_points.shape[0]):
-            self.record_values[self.idx] += plane2point_distance(
-                plane_model, animal_points[i, :])
+            v = plane2point_distance(plane_model, animal_points[i, :])
+            if v > 0.001:
+                sum_v += v
+                cnt_v += 1
+        self.record_values[self.idx] = sum_v / cnt_v
 
         # update the scene
         pcd.rotate(rotation_matrix)
