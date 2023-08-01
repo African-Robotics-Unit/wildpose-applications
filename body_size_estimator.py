@@ -76,7 +76,7 @@ class KeyEvent:
 
         self.record_values = [0] * len(self.pcd_fpaths)
 
-    def get_plot(self, vis):
+    def _get_plot(self, vis):
         for i in tqdm(range(len(self.pcd_fpaths))):
             self.idx = i
             self.update_pcd(vis)
@@ -99,6 +99,51 @@ class KeyEvent:
         ax.set_xlabel('Timestamp')
         ax.set_ylabel('Diff of Body Volume')
         plt.show()
+        return True
+
+    def get_plot(self, vis):
+        for i in tqdm(range(len(self.pcd_fpaths))):
+            self.idx = i
+            self.update_pcd(vis)
+
+        # gather the data values
+        xs = self.timestamps
+        ys = []
+        yerr_negative = []
+        yerr_positive = []
+        for values in self.record_values:
+            tmp = [v for v in values if v > 0.001]
+            y = np.average(tmp)
+            ys.append(y)
+            yerr_negative.append(y - np.min(tmp))
+            yerr_positive.append(np.max(tmp) - y)
+
+        # plot
+        fig, ax = plt.subplots()
+        vplot_data = [values for values in self.record_values]
+        ax.violinplot(
+            vplot_data, positions=xs,
+            widths=0.1,
+            showmeans=True
+        )
+        ax.set_xlabel('Timestamp')
+        ax.set_ylabel('Diff of Body Volume')
+        ymin, ymax = ax.get_ylim()
+        ax.vlines(
+            x=[t for i, t in enumerate(self.timestamps)
+               if self.labels[i] == 1],
+            ymin=ymin, ymax=ymax,
+            colors='red', ls='--'
+        )
+        ax.vlines(
+            x=[t for i, t in enumerate(self.timestamps)
+               if self.labels[i] == -1],
+            ymin=ymin, ymax=ymax,
+            colors='blue', ls='--'
+        )
+        ax.set_xlabel('Timestamp')
+        ax.set_ylabel('Diff of Body Volume')
+
         return True
 
     def update_pcd(self, vis):
@@ -173,15 +218,10 @@ class KeyEvent:
         animal_points = points[combined_mask, :]
         colors[combined_mask, :] = [1, 0, 0]
         self.current_pcd.colors = o3d.utility.Vector3dVector(colors)
-        self.record_values[self.idx] = 0
-        sum_v = 0
-        cnt_v = 0
+        self.record_values[self.idx] = []
         for i in range(animal_points.shape[0]):
             v = plane2point_distance(plane_model, animal_points[i, :])
-            if v > 0.001:
-                sum_v += v
-                cnt_v += 1
-        self.record_values[self.idx] = sum_v / cnt_v
+            self.record_values[self.idx].append(v)
 
         # update the scene
         pcd.rotate(rotation_matrix)
