@@ -196,8 +196,7 @@ def lidar2cam_projection(pcd, extrinsic):
     return pcd_in_cam
 
 
-def cam2image_projection(pcd, intrinsic):
-
+def cam2image_projection(pcd_in_cam, intrinsic):
     pcd_in_image = intrinsic.dot(pcd_in_cam)
     pcd_in_image[:2] /= pcd_in_image[2, :]
 
@@ -220,18 +219,19 @@ def get_3D_by_2Dloc(pcd_in_image, pcd_in_cam, loc_yx_2d, width, height):
     return closest_pos_3D, closest_pos_2D
 
 
-def extract_rgb_from_image(pcd_in_image, pcd_in_cam,
-                           obj_masks, obj_dict, width, height):
+def extract_rgb_from_image(
+    pcd_in_image, pcd_in_cam, obj_masks, obj_dict, width, height
+):
 
-    valid_mask = (pcd_in_image[:,
-                               0] >= 0) * (pcd_in_image[:,
-                                                        0] < width) * (pcd_in_image[:,
-                                                                                    1] >= 0) * (pcd_in_image[:,
-                                                                                                             1] < height) * (pcd_in_image[:,
-                                                                                                                                          2] > 0)
+    valid_mask = \
+        (0 <= pcd_in_image[:, 0]) * (pcd_in_image[:, 0] < width) * \
+        (0 <= pcd_in_image[:, 1]) * (pcd_in_image[:, 1] < height) * \
+        (0 < pcd_in_image[:, 2])
 
     pixel_locs = np.concatenate(
-        [pcd_in_image[valid_mask, 1][:, None], pcd_in_image[valid_mask, 0][:, None]], 1)  # yx
+        [pcd_in_image[valid_mask, 1][:, None],
+         pcd_in_image[valid_mask, 0][:, None]],
+        axis=1)  # yx
     pixel_locs = pixel_locs.astype(int)
     valid_locs = np.where(valid_mask)[0]
 
@@ -261,27 +261,23 @@ def extract_rgb_from_image(pcd_in_image, pcd_in_cam,
     return colors, valid_mask, obj_points, obj_mask_from_color
 
 
-def extract_rgb_from_image_pure(
-        pcd_in_image, pcd_in_cam, obj_masks, obj_dict, width, height):
-
-    valid_mask = (pcd_in_image[:,
-                               0] >= 0) * (pcd_in_image[:,
-                                                        0] < width) * (pcd_in_image[:,
-                                                                                    1] >= 0) * (pcd_in_image[:,
-                                                                                                             1] < height) * (pcd_in_image[:,
-                                                                                                                                          2] > 0)
+def extract_rgb_from_image_pure(pcd_in_img, width, height):
+    valid_mask = \
+        (0 <= pcd_in_img[:, 0]) * (pcd_in_img[:, 0] < width) * \
+        (0 <= pcd_in_img[:, 1]) * (pcd_in_img[:, 1] < height) * \
+        (0 < pcd_in_img[:, 2])
 
     pixel_locs = np.concatenate(
-        [pcd_in_image[valid_mask, 1][:, None], pcd_in_image[valid_mask, 0][:, None]], 1)  # yx
+        [pcd_in_img[valid_mask, 1][:, None],
+            pcd_in_img[valid_mask, 0][:, None]],
+        axis=1)  # yx
     pixel_locs = pixel_locs.astype(int)
     valid_locs = np.where(valid_mask)[0]
 
-    colors = np.zeros((len(pcd_in_image), 3))
+    pcd_colors = np.zeros((len(pcd_in_img), 3))
+    pcd_colors[valid_mask, :] = img[pixel_locs[:, 0], pixel_locs[:, 1]] / 255.0
 
-    # colors[:,:3] = 1.0
-    colors[valid_mask, :] = img[pixel_locs[:, 0], pixel_locs[:, 1]] / 255.0
-
-    return colors, valid_mask
+    return pcd_colors, valid_mask
 
 
 def visualize_open3d(vis, pcd_with_rgb, obj_pos_colors,
@@ -521,6 +517,14 @@ def get_2D_gt(gt_json_path):
     return img_dict
 
 
+# arguments
+data_dir = 'data/lion_sleep3'
+file_path_lidar = os.path.join(data_dir, 'lidar/')
+file_path_rgb = os.path.join(data_dir, 'sync_rgb/')
+file_path_mask = os.path.join(data_dir, 'masks_lion2/')
+cam_params = json.load(open(
+    os.path.join(data_dir, 'manual_calibration.json'), 'r'))
+
 camera_plot_lines = [
     [4, 0], [4, 1], [4, 2], [4, 3],
     [0, 1], [1, 3], [3, 2], [2, 0]
@@ -537,25 +541,8 @@ cam_plotter.points = o3d.utility.Vector3dVector(cam_plotter_pose)
 cam_plotter.lines = o3d.utility.Vector2iVector(camera_plot_lines)
 cam_plotter.colors = o3d.utility.Vector3dVector(cam_plotter_colors)
 
-data_dir = 'data/lion_sleep3'
-file_path_lidar = os.path.join(data_dir, 'lidar/')
-file_path_rgb = os.path.join(data_dir, 'sync_rgb/')
-file_path_mask = os.path.join(data_dir, 'masks_lion2/')
-
-
 lidar_list, rgb_list = sync_lidar_and_rgb(file_path_lidar, file_path_rgb)
 
-
-'''
-#yaw : 1.570639062095288 pitch : -0.001308291581759491 roll : 1.5705664620533883
-quat_rot: 0.5, -0.5, 0.5, 0.5000000000000001
-translation: 0.14000000059604645,0.0014900000533089042,-0.07599999755620956
-intrinsic: 18250.0,18250.0,745.0,370.0
-'''
-# rot_mat = quaternion.as_rotation_matrix(quaternion.from_float_array(np.array([0.5, 0.5, 0.5000000000000001,0.5 ])))
-
-cam_params = json.load(open(
-    os.path.join(data_dir, 'manual_calibration.json'), 'r'))
 rot_mat = quaternion.as_rotation_matrix(quaternion.from_float_array(np.array([
     cam_params['extrinsics_R'][0],
     -cam_params['extrinsics_R'][1],
@@ -584,33 +571,33 @@ fourcc = cv2.VideoWriter_fourcc(*'XVID')
 out = cv2.VideoWriter(OUTPUT_VIDEO_PATH, fourcc, FPS,
                       (OUTPUT_WIDTH, OUTPUT_HEIGHT))
 for idx in tqdm(range(len(rgb_list))):
-    # if idx > 100:
-    #    break
+    # load the frame image
     rgb_path = rgb_list[idx]
-
-    lidar_path = lidar_list[idx]
-    mask_idx = np.load(file_path_mask + '{0}.npy'.format(idx))
     key = os.path.basename(rgb_path)
-
+    img_bgr = cv2.imread(rgb_path)
+    img = cv2.cvtColor(img_bgr, cv2.COLOR_BGR2RGB)
+    # load the image mask
+    mask_idx = np.load(file_path_mask + '{0}.npy'.format(idx))
+    # load point cloud of the frame
+    lidar_path = lidar_list[idx]
     pcd_in_lidar = o3d.io.read_point_cloud(lidar_path)
     pcd_in_lidar = np.asarray(pcd_in_lidar.points)
 
-    img_bgr = cv2.imread(rgb_path)
-    img = cv2.cvtColor(img_bgr, cv2.COLOR_BGR2RGB)
-
+    # load the camera parameters
     intrinsic = make_intrinsic(fx, fy, cx, cy)
     extrinsic = make_extrinsic(rot_mat, translation)
 
+    # project the point cloud to camera and its image sensor
     pcd_in_cam = lidar2cam_projection(pcd_in_lidar, extrinsic)
-    pcd_in_image = cam2image_projection(pcd_in_cam, intrinsic)
+    pcd_in_img = cam2image_projection(pcd_in_cam, intrinsic)
 
     pcd_in_cam = pcd_in_cam.T[:, :-1]
-    pcd_in_image = pcd_in_image.T[:, :-1]
+    pcd_in_img = pcd_in_img.T[:, :-1]
 
     obj_pos_colors = []
-    colors_save, valid_mask_save = extract_rgb_from_image_pure(
-        pcd_in_image, pcd_in_cam, mask_idx, img_dict[key], width=IMG_WIDTH, height=IMG_HEIGHT)
-    pcd_with_rgb_save = np.concatenate([pcd_in_cam, colors_save], 1)
+    pcd_colors, valid_mask_save = extract_rgb_from_image_pure(
+        pcd_in_img, width=IMG_WIDTH, height=IMG_HEIGHT)
+    pcd_with_rgb_save = np.concatenate([pcd_in_cam, pcd_colors], 1)
     pcd_with_rgb_save = pcd_with_rgb_save[valid_mask_save]
     pcd_for_save_rgb = o3d.geometry.PointCloud()
     pcd_for_save_rgb.points = o3d.utility.Vector3dVector(
@@ -619,7 +606,7 @@ for idx in tqdm(range(len(rgb_list))):
         pcd_with_rgb_save[:, 3:])
 
     colors, valid_mask, obj_points_colors, obj_mask_from_color = extract_rgb_from_image(
-        pcd_in_image, pcd_in_cam, mask_idx, img_dict[key], width=IMG_WIDTH, height=IMG_HEIGHT)
+        pcd_in_img, pcd_in_cam, mask_idx, img_dict[key], width=IMG_WIDTH, height=IMG_HEIGHT)
     pcd_in_cam = pcd_in_cam[valid_mask]
 
     # pcd_for_save_mask = o3d.geometry.PointCloud()
@@ -633,7 +620,7 @@ for idx in tqdm(range(len(rgb_list))):
         obj_mask_from_color)
 
     pcd_with_rgb = np.concatenate([pcd_in_cam, colors], 1)
-    pcd_in_image = pcd_in_image[valid_mask]
+    pcd_in_img = pcd_in_img[valid_mask]
 
     pcd_img = visualize_open3d(
         vis,
@@ -644,7 +631,7 @@ for idx in tqdm(range(len(rgb_list))):
         obj_points_colors)
     img_valid_mask = visualize_opencv(
         img,
-        pcd_in_image,
+        pcd_in_img,
         mask_idx,
         img_dict[key],
         width=IMG_WIDTH,
@@ -665,7 +652,7 @@ for idx in tqdm(range(len(rgb_list))):
 
             center_x, center_y = x1 + (width) / 2.0, y1 + height / 2.0
 
-            loc3d, closest_pos_2D = get_3D_by_2Dloc(pcd_in_image, pcd_in_cam, np.array(
+            loc3d, closest_pos_2D = get_3D_by_2Dloc(pcd_in_img, pcd_in_cam, np.array(
                 [int(center_y), int(center_x)])[None, :], width, height)
 
             color_RGB = COLORS[colors_indice[obj_id]]['color']
