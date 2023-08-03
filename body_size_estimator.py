@@ -76,31 +76,6 @@ class KeyEvent:
 
         self.record_values = [0] * len(self.pcd_fpaths)
 
-    def _get_plot(self, vis):
-        for i in tqdm(range(len(self.pcd_fpaths))):
-            self.idx = i
-            self.update_pcd(vis)
-
-        fig, ax = plt.subplots()
-        ax.plot(self.timestamps, self.record_values, '-o')
-        ymin, ymax = ax.get_ylim()
-        ax.vlines(
-            x=[t for i, t in enumerate(self.timestamps)
-               if self.labels[i] == 1],
-            ymin=ymin, ymax=ymax,
-            colors='red', ls='--'
-        )
-        ax.vlines(
-            x=[t for i, t in enumerate(self.timestamps)
-               if self.labels[i] == -1],
-            ymin=ymin, ymax=ymax,
-            colors='blue', ls='--'
-        )
-        ax.set_xlabel('Timestamp')
-        ax.set_ylabel('Diff of Body Volume')
-        plt.show()
-        return True
-
     def get_plot(self, vis):
         for i in tqdm(range(len(self.pcd_fpaths))):
             self.idx = i
