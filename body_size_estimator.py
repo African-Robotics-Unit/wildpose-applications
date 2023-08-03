@@ -242,7 +242,8 @@ class KeyEvent:
             self.record_values[self.idx].append(v)
 
         # update the scene
-        # pcd.rotate(rotation_matrix)
+        pcd.rotate(rotation_matrix)
+        ground_plane_mesh.rotate(rotation_matrix)
         self.current_pcd = pcd
         vis.add_geometry(ground_plane_mesh)
         vis.add_geometry(self.current_pcd)
