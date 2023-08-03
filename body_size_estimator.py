@@ -76,30 +76,47 @@ class KeyEvent:
 
         self.record_values = [0] * len(self.pcd_fpaths)
 
-    def _get_plot(self, vis):
-        for i in tqdm(range(len(self.pcd_fpaths))):
-            self.idx = i
-            self.update_pcd(vis)
+    def get_plane_mesh(self, plane_model):
+        """
+        plane_model: [a, b, c, d] for plane equation ax + by + cz + d = 0
+        """
 
-        fig, ax = plt.subplots()
-        ax.plot(self.timestamps, self.record_values, '-o')
-        ymin, ymax = ax.get_ylim()
-        ax.vlines(
-            x=[t for i, t in enumerate(self.timestamps)
-               if self.labels[i] == 1],
-            ymin=ymin, ymax=ymax,
-            colors='red', ls='--'
-        )
-        ax.vlines(
-            x=[t for i, t in enumerate(self.timestamps)
-               if self.labels[i] == -1],
-            ymin=ymin, ymax=ymax,
-            colors='blue', ls='--'
-        )
-        ax.set_xlabel('Timestamp')
-        ax.set_ylabel('Diff of Body Volume')
-        plt.show()
-        return True
+        # Create a mesh grid for the plane
+        x = np.linspace(-10, 10, 100)
+        y = np.linspace(-10, 10, 100)
+        x, y = np.meshgrid(x, y)
+        z = (-plane_model[3] - plane_model[0] *
+             x - plane_model[1] * y) / plane_model[2]
+
+        # Create a point cloud from the mesh grid
+        plane_pcd = o3d.geometry.PointCloud()
+        plane_points = np.vstack((x.flatten(), y.flatten(), z.flatten())).T
+        plane_pcd.points = o3d.utility.Vector3dVector(plane_points)
+
+        # Create a TriangleMesh from the mesh grid
+        vertices = np.vstack((x.flatten(), y.flatten(), z.flatten())).T
+        triangles = []
+        for i in range(x.shape[0] - 1):
+            for j in range(x.shape[1] - 1):
+                # Original triangles
+                triangles.append(
+                    [i * x.shape[1] + j, i * x.shape[1] + j + 1, (i + 1) * x.shape[1] + j])
+                triangles.append([i * x.shape[1] + j + 1,
+                                  (i + 1) * x.shape[1] + j + 1,
+                                  (i + 1) * x.shape[1] + j])
+                # Reversed triangles
+                triangles.append([i * x.shape[1] + j, (i + 1)
+                                 * x.shape[1] + j, i * x.shape[1] + j + 1])
+                triangles.append([i * x.shape[1] + j + 1,
+                                  (i + 1) * x.shape[1] + j,
+                                  (i + 1) * x.shape[1] + j + 1])
+
+        plane_mesh = o3d.geometry.TriangleMesh()
+        plane_mesh.vertices = o3d.utility.Vector3dVector(vertices)
+        plane_mesh.triangles = o3d.utility.Vector3iVector(triangles)
+        plane_mesh.paint_uniform_color([1, 0.6, 0.75])
+
+        return plane_mesh
 
     def get_plot(self, vis):
         for i in tqdm(range(len(self.pcd_fpaths))):
@@ -199,6 +216,7 @@ class KeyEvent:
                                                  num_iterations=1000)
         ground_mask = np.ones_like(pcd_mask)
         ground_mask[inliers] = 0
+        ground_plane_mesh = self.get_plane_mesh(plane_model)
 
         # Compute rotation matrix to align the normal of the ground plane to
         # Y-axis
@@ -225,7 +243,9 @@ class KeyEvent:
 
         # update the scene
         pcd.rotate(rotation_matrix)
+        ground_plane_mesh.rotate(rotation_matrix)
         self.current_pcd = pcd
+        vis.add_geometry(ground_plane_mesh)
         vis.add_geometry(self.current_pcd)
         vis.get_view_control().convert_from_pinhole_camera_parameters(viewpoint_param)
         print(os.path.basename(self.pcd_fpaths[self.idx]))
