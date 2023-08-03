@@ -98,11 +98,18 @@ class KeyEvent:
         triangles = []
         for i in range(x.shape[0] - 1):
             for j in range(x.shape[1] - 1):
+                # Original triangles
                 triangles.append(
                     [i * x.shape[1] + j, i * x.shape[1] + j + 1, (i + 1) * x.shape[1] + j])
                 triangles.append([i * x.shape[1] + j + 1,
                                   (i + 1) * x.shape[1] + j + 1,
                                   (i + 1) * x.shape[1] + j])
+                # Reversed triangles
+                triangles.append([i * x.shape[1] + j, (i + 1)
+                                 * x.shape[1] + j, i * x.shape[1] + j + 1])
+                triangles.append([i * x.shape[1] + j + 1,
+                                  (i + 1) * x.shape[1] + j,
+                                  (i + 1) * x.shape[1] + j + 1])
 
         plane_mesh = o3d.geometry.TriangleMesh()
         plane_mesh.vertices = o3d.utility.Vector3dVector(vertices)
