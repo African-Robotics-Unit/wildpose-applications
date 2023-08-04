@@ -121,32 +121,42 @@ class KeyEvent:
         return plane_mesh
 
     def get_plot(self, vis):
-        # for i in tqdm(range(len(self.pcd_fpaths))):
-        #     self.idx = i
-        #     self.update_pcd(vis)
+        for i in tqdm(range(len(self.pcd_fpaths))):
+            self.idx = i
+            self.update_pcd(vis)
 
         # gather the data values
         xs = self.timestamps
         ys = []
-        # yerr_negative = []
-        # yerr_positive = []
-        # for values in self.record_values:
-        #     tmp = [v for v in values if v > 0.001]
-        #     y = np.average(tmp)
-        #     ys.append(y)
-        #     yerr_negative.append(y - np.min(tmp))
-        #     yerr_positive.append(np.max(tmp) - y)
+        yerr_negative = []
+        yerr_positive = []
+        for values in self.record_values:
+            tmp = [v for v in values if v > 0.001]
+            y = np.average(tmp)
+            ys.append(y)
+            yerr_negative.append(y - np.min(tmp))
+            yerr_positive.append(np.max(tmp) - y)
 
         # gather the IMU data
         imu_xs = []
-        imu_ys = []
+        angle_velocity = []
         for data in self.imu_data:
             if xs[0] <= data['timestamp_sec'] <= xs[-1]:
                 imu_xs.append(
                     float(str(data['timestamp_sec']) + '.' +
                           str(data['timestamp_nanosec']))
                 )
-                imu_ys.append(data['angular_velocity'][1])
+                angle_velocity.append(data['angular_velocity'])
+        angle_velocity = [y for x, y in sorted(zip(imu_xs, angle_velocity))]
+        imu_xs = sorted(imu_xs)
+        imu_ys = [y[0] for y in angle_velocity]
+
+        angle_change = [0, 0, 0]
+        for i in range(len(imu_xs) - 1):
+            for j in range(len(angle_change)):
+                angle_change[j] += angle_velocity[i][j] * \
+                    (imu_xs[i + 1] - imu_xs[i])
+        print(angle_change)
 
         # plot
         fig, ax = plt.subplots()
