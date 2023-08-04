@@ -59,6 +59,7 @@ class KeyEvent:
                  labels,
                  timestamps,
                  bbox_dict,
+                 img_data,
                  intrinsic_mat, extrinsic_mat,
                  pcd_mode,
                  init_geometry=None):
@@ -73,6 +74,7 @@ class KeyEvent:
         self.bbox_dict = bbox_dict
         self.intrinsic_mat = intrinsic_mat
         self.extrinsic_mat = extrinsic_mat
+        self.imu_data = img_data
 
         self.record_values = [0] * len(self.pcd_fpaths)
 
@@ -119,24 +121,36 @@ class KeyEvent:
         return plane_mesh
 
     def get_plot(self, vis):
-        for i in tqdm(range(len(self.pcd_fpaths))):
-            self.idx = i
-            self.update_pcd(vis)
+        # for i in tqdm(range(len(self.pcd_fpaths))):
+        #     self.idx = i
+        #     self.update_pcd(vis)
 
         # gather the data values
         xs = self.timestamps
         ys = []
-        yerr_negative = []
-        yerr_positive = []
-        for values in self.record_values:
-            tmp = [v for v in values if v > 0.001]
-            y = np.average(tmp)
-            ys.append(y)
-            yerr_negative.append(y - np.min(tmp))
-            yerr_positive.append(np.max(tmp) - y)
+        # yerr_negative = []
+        # yerr_positive = []
+        # for values in self.record_values:
+        #     tmp = [v for v in values if v > 0.001]
+        #     y = np.average(tmp)
+        #     ys.append(y)
+        #     yerr_negative.append(y - np.min(tmp))
+        #     yerr_positive.append(np.max(tmp) - y)
+
+        # gather the IMU data
+        imu_xs = []
+        imu_ys = []
+        for data in self.imu_data:
+            if xs[0] <= data['timestamp_sec'] <= xs[-1]:
+                imu_xs.append(
+                    float(str(data['timestamp_sec']) + '.' +
+                          str(data['timestamp_nanosec']))
+                )
+                imu_ys.append(data['angular_velocity'][1])
 
         # plot
         fig, ax = plt.subplots()
+        ax.plot(imu_xs, imu_ys, '.')
         vplot_data = [values for values in self.record_values]
         ax.violinplot(
             vplot_data, positions=xs,
@@ -284,6 +298,7 @@ def main():
         get_timestamp_from_pcd_fpath(f)
         for f in pcd_fpaths
     ])
+    img_data = json.load(open(config['imu_fpath'], 'r'))
     df = pd.read_excel(os.path.join(config['scene_dir'], 'body_state.xlsx'))
     labels = df['state']
     labels = labels.where(pd.notnull(labels), None).tolist()
@@ -310,6 +325,7 @@ def main():
         labels,
         timestamps,
         bbox_dict,
+        img_data,
         intrinsic_mat, extrinsic_mat,
         pcd_mode=pcd_mode,
         init_geometry=init_geometry
