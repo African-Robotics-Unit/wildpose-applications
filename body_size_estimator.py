@@ -123,7 +123,7 @@ class KeyEvent:
     def get_plot(self, vis):
         for i in tqdm(range(len(self.pcd_fpaths))):
             self.idx = i
-            self.update_pcd(vis)
+            self.update_pcd(vis, verb=False)
 
         # gather the data values
         xs = self.timestamps
@@ -187,7 +187,7 @@ class KeyEvent:
 
         return True
 
-    def update_pcd(self, vis):
+    def update_pcd(self, vis, verb=True):
         # reset the scene
         viewpoint_param = vis.get_view_control().convert_to_pinhole_camera_parameters()
         if self.current_pcd is not None:
@@ -257,7 +257,9 @@ class KeyEvent:
         points = np.asarray(pcd.points)
         colors = np.asarray(pcd.colors)
         combined_mask = (ground_mask == 1) & (pcd_mask == 1)
-        animal_points = points[combined_mask, :]
+        range_mask = (31.07 < points[:, 0]) & (points[:, 0] < 31.66) & \
+                     (-0.166 < points[:, 1]) & (points[:, 1] < 0.495)
+        animal_points = points[combined_mask & range_mask, :]
         colors[combined_mask, :] = [1, 0, 0]
         self.current_pcd.colors = o3d.utility.Vector3dVector(colors)
         self.record_values[self.idx] = []
@@ -266,13 +268,14 @@ class KeyEvent:
             self.record_values[self.idx].append(v)
 
         # update the scene
-        pcd.rotate(rotation_matrix)
-        ground_plane_mesh.rotate(rotation_matrix)
+        # pcd.rotate(rotation_matrix)
+        # ground_plane_mesh.rotate(rotation_matrix)
         self.current_pcd = pcd
         vis.add_geometry(ground_plane_mesh)
         vis.add_geometry(self.current_pcd)
         vis.get_view_control().convert_from_pinhole_camera_parameters(viewpoint_param)
-        print(os.path.basename(self.pcd_fpaths[self.idx]))
+        if verb:
+            print(os.path.basename(self.pcd_fpaths[self.idx]))
 
         self.increment_pcd_index()
         return True
