@@ -139,24 +139,17 @@ class KeyEvent:
 
         # gather the IMU data
         imu_xs = []
-        angle_velocity = []
+        angle_acc = []
         for data in self.imu_data:
             if xs[0] <= data['timestamp_sec'] <= xs[-1]:
                 imu_xs.append(
                     float(str(data['timestamp_sec']) + '.' +
                           str(data['timestamp_nanosec']))
                 )
-                angle_velocity.append(data['angular_velocity'])
-        angle_velocity = [y for x, y in sorted(zip(imu_xs, angle_velocity))]
+                angle_acc.append(data['linear_acceleration'])
+        angle_acc = [y for x, y in sorted(zip(imu_xs, angle_acc))]
         imu_xs = sorted(imu_xs)
-        imu_ys = [y[0] for y in angle_velocity]
-
-        angle_change = [0, 0, 0]
-        for i in range(len(imu_xs) - 1):
-            for j in range(len(angle_change)):
-                angle_change[j] += angle_velocity[i][j] * \
-                    (imu_xs[i + 1] - imu_xs[i])
-        print(angle_change)
+        imu_ys = [y[2] for y in angle_acc]
 
         # plot
         fig, ax = plt.subplots()
@@ -190,8 +183,7 @@ class KeyEvent:
         # reset the scene
         viewpoint_param = vis.get_view_control().convert_to_pinhole_camera_parameters()
         if self.current_pcd is not None:
-            self.current_pcd.points = o3d.utility.Vector3dVector([])
-            self.current_pcd.colors = o3d.utility.Vector3dVector([])
+            vis.clear_geometries()
 
         # load target files
         img_fpath = self.img_fpaths[self.idx]
@@ -265,7 +257,8 @@ class KeyEvent:
         self.current_pcd.colors = o3d.utility.Vector3dVector(colors)
         self.record_values[self.idx] = []
         for i in range(animal_points.shape[0]):
-            v = plane2point_distance(plane_model, animal_points[i, :])
+            # v = plane2point_distance(plane_model, animal_points[i, :])
+            v = animal_points[i, 2]
             self.record_values[self.idx].append(v)
 
         # update the scene
