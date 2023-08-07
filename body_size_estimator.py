@@ -167,8 +167,6 @@ class KeyEvent:
             widths=0.1,
             showmeans=True
         )
-        ax.set_xlabel('Timestamp')
-        ax.set_ylabel('Diff of Body Volume')
         ymin, ymax = ax.get_ylim()
         ax.vlines(
             x=[t for i, t in enumerate(self.timestamps)
