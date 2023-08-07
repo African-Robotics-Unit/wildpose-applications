@@ -84,7 +84,7 @@ class KeyEvent:
         """
 
         # Create a mesh grid for the plane
-        x = np.linspace(-10, 10, 100)
+        x = np.linspace(0, 500, 100)
         y = np.linspace(-10, 10, 100)
         x, y = np.meshgrid(x, y)
         z = (-plane_model[3] - plane_model[0] *
@@ -160,15 +160,13 @@ class KeyEvent:
 
         # plot
         fig, ax = plt.subplots()
-        ax.plot(imu_xs, imu_ys, '.')
+        # ax.plot(imu_xs, imu_ys, '.')
         vplot_data = [values for values in self.record_values]
         ax.violinplot(
             vplot_data, positions=xs,
             widths=0.1,
             showmeans=True
         )
-        ax.set_xlabel('Timestamp')
-        ax.set_ylabel('Diff of Body Volume')
         ymin, ymax = ax.get_ylim()
         ax.vlines(
             x=[t for i, t in enumerate(self.timestamps)
@@ -184,6 +182,7 @@ class KeyEvent:
         )
         ax.set_xlabel('Timestamp')
         ax.set_ylabel('Diff of Body Volume')
+        plt.show()
 
         return True
 
@@ -222,12 +221,12 @@ class KeyEvent:
 
         # make the colored point cloud
         img_height, img_width, _ = rgb_img.shape
-        pcd_colors, valid_mask, pcd_mask = projection_functions.get_coloured_point_cloud(
+        pcd_colors, valid_mask, pcd_seg, pcd_mask = projection_functions.get_coloured_point_cloud(
             pts_in_img, rgb_img, seg_mask,
             self.bbox_dict[os.path.basename(img_fpath)],
             width=img_width, height=img_height)
-        rgb_pcd = np.concatenate([pts_in_cam, pcd_colors], axis=1)
-        rgb_pcd = rgb_pcd[valid_mask]  # [N, 6]
+        rgb_pcd = np.concatenate([pts, pcd_colors], axis=1)
+        # rgb_pcd = rgb_pcd[valid_mask]  # [N, 6]
         pcd = o3d.geometry.PointCloud()
         pcd.points = o3d.utility.Vector3dVector(
             rgb_pcd[:, :3])
@@ -238,7 +237,8 @@ class KeyEvent:
         plane_model, inliers = pcd.segment_plane(distance_threshold=0.01,
                                                  ransac_n=3,
                                                  num_iterations=1000)
-        ground_mask = np.ones_like(pcd_mask)
+        num_points = np.array(pcd.points).shape[0]
+        ground_mask = np.ones(num_points)
         ground_mask[inliers] = 0
         ground_plane_mesh = self.get_plane_mesh(plane_model)
 
@@ -256,11 +256,12 @@ class KeyEvent:
         # pick the target dots up and change the color
         points = np.asarray(pcd.points)
         colors = np.asarray(pcd.colors)
-        combined_mask = (ground_mask == 1) & (pcd_mask == 1)
-        range_mask = (31.07 < points[:, 0]) & (points[:, 0] < 31.66) & \
+        combined_mask = (ground_mask == 1) & (pcd_seg == 1)
+        range_mask = (31.07 < points[:, 0]) & (points[:, 0] < 32.00) & \
                      (-0.166 < points[:, 1]) & (points[:, 1] < 0.495)
-        animal_points = points[combined_mask & range_mask, :]
-        colors[combined_mask, :] = [1, 0, 0]
+        target_mask = combined_mask & range_mask
+        animal_points = points[target_mask, :]
+        colors[target_mask, :] = [1, 0, 0]
         self.current_pcd.colors = o3d.utility.Vector3dVector(colors)
         self.record_values[self.idx] = []
         for i in range(animal_points.shape[0]):
@@ -319,8 +320,8 @@ def main():
         labels) == len(mask_fpaths)
 
     # load camera parameters
-    calib_fpth = os.path.join(config['scene_dir'], 'manual_calibration.json')
-    fx, fy, cx, cy, rot_mat, translation = load_camera_parameters(calib_fpth)
+    calib_fpath = os.path.join(config['scene_dir'], 'manual_calibration.json')
+    fx, fy, cx, cy, rot_mat, translation = load_camera_parameters(calib_fpath)
 
     # get the bounding box labels
     bbox_dict = get_bbox_labels(config['bbox_info_fpath'])

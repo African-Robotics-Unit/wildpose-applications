@@ -217,31 +217,67 @@ def extract_rgb_from_image_pure(pcd_in_img, rgb_img, width, height):
 
 
 def get_coloured_point_cloud(
-    pcd_in_img, rgb_img, seg_mask, obj_dict, width, height
+    pcd_on_img, rgb_img, img_seg_mask, obj_dict, width, height
 ):
-    valid_mask = \
-        (0 <= pcd_in_img[:, 0]) * (pcd_in_img[:, 0] < width) * \
-        (0 <= pcd_in_img[:, 1]) * (pcd_in_img[:, 1] < height) * \
-        (0 < pcd_in_img[:, 2])
+    """generate the color info of point cloud
+
+    Parameters
+    ----------
+    pcd_on_img : np.ndarray
+        [N, 3]
+    rgb_img : np.ndarray
+        [H, W, 3]
+    img_seg_mask : _type_
+        [O, 1, H, W], where `O` is the number of semantic objects.
+    obj_dict : _type_
+        _description_
+    width : _type_
+        _description_
+    height : _type_
+        _description_
+
+    Returns
+    -------
+    pcd_colors :
+        [N, 3]
+    valid_mask :
+        indicates if each 3D points are on the image. [N,]
+    pcd_mask :
+        shows the segmentation labels of 3D points. The default value is -1.
+    pcd_seg_mask :
+        shows the object labels of 3D points in the image frame.
+        The shape is [M,], where `M` is the number of 3D points in the image.
+    """
+    num_pts = pcd_on_img.shape[0]
+    num_objs = img_seg_mask.shape[0]
+    valid_pcd_mask = \
+        (0 <= pcd_on_img[:, 0]) * (pcd_on_img[:, 0] < width) * \
+        (0 <= pcd_on_img[:, 1]) * (pcd_on_img[:, 1] < height) * \
+        (0 < pcd_on_img[:, 2])  # [N,]
+    # the indices of the valid 3d points
+    valid_pt_locs = np.where(valid_pcd_mask)[0]  # [M,]
+    num_pts_in_img = valid_pt_locs.shape[0]
 
     pixel_locs = np.concatenate(
-        [pcd_in_img[valid_mask, 1][:, None],
-         pcd_in_img[valid_mask, 0][:, None]],
-        axis=1)  # yx
-    pixel_locs = pixel_locs.astype(int)
+        [pcd_on_img[valid_pcd_mask, 1][:, None],
+         pcd_on_img[valid_pcd_mask, 0][:, None]],
+        axis=1)  # [M, yx]
+    pixel_locs = pixel_locs.astype(int)  # [M, 2]
 
-    pcd_colors = np.zeros((len(pcd_in_img), 3))
-    pcd_colors[valid_mask, :] = rgb_img[pixel_locs[:, 0],
-                                        pixel_locs[:, 1]] / 255.0
+    # get the image color info
+    pcd_colors = np.zeros((len(pcd_on_img), 3))
+    pcd_colors[valid_pcd_mask, :] = rgb_img[pixel_locs[:, 0],
+                                            pixel_locs[:, 1]] / 255.0
 
-    valid_locs = np.where(valid_mask)[0]
-    pcd_in_img_valid = pcd_in_img[valid_locs]
-    pcd_seg_mask = np.zeros(len(pcd_in_img_valid))
-    for obj_idx in range(len(seg_mask)):
+    # get the segmentation info
+    pcd_seg_mask = np.zeros(num_pts_in_img)  # [M,]
+    pcd_seg = -np.ones(num_pts)  # default ID is -1
+    for obj_idx in range(num_objs):
         _, obj_id = obj_dict[obj_idx]
-        obj_mask = seg_mask[obj_idx, 0]
-        valid_locs_mask = np.where(
+        obj_mask = img_seg_mask[obj_idx, 0, :, :]   # [H, W]
+        valid_pt_locs_mask = np.where(
             obj_mask[pixel_locs[:, 0], pixel_locs[:, 1]])
-        pcd_seg_mask[valid_locs_mask] = obj_id
+        pcd_seg_mask[valid_pt_locs_mask] = obj_id
+        pcd_seg[valid_pt_locs[valid_pt_locs_mask]] = obj_id
 
-    return pcd_colors, valid_mask, pcd_seg_mask
+    return pcd_colors, valid_pcd_mask, pcd_seg, pcd_seg_mask
