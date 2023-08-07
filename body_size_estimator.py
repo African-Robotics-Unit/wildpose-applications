@@ -257,7 +257,7 @@ class KeyEvent:
         points = np.asarray(pcd.points)
         colors = np.asarray(pcd.colors)
         combined_mask = (ground_mask == 1) & (pcd_seg == 1)
-        range_mask = (31.07 < points[:, 0]) & (points[:, 0] < 31.66) & \
+        range_mask = (31.07 < points[:, 0]) & (points[:, 0] < 32.00) & \
                      (-0.166 < points[:, 1]) & (points[:, 1] < 0.495)
         target_mask = combined_mask & range_mask
         animal_points = points[target_mask, :]
