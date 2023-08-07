@@ -160,7 +160,7 @@ class KeyEvent:
 
         # plot
         fig, ax = plt.subplots()
-        ax.plot(imu_xs, imu_ys, '.')
+        # ax.plot(imu_xs, imu_ys, '.')
         vplot_data = [values for values in self.record_values]
         ax.violinplot(
             vplot_data, positions=xs,
@@ -182,6 +182,7 @@ class KeyEvent:
         )
         ax.set_xlabel('Timestamp')
         ax.set_ylabel('Diff of Body Volume')
+        plt.show()
 
         return True
 
@@ -258,8 +259,9 @@ class KeyEvent:
         combined_mask = (ground_mask == 1) & (pcd_seg == 1)
         range_mask = (31.07 < points[:, 0]) & (points[:, 0] < 31.66) & \
                      (-0.166 < points[:, 1]) & (points[:, 1] < 0.495)
-        animal_points = points[combined_mask & range_mask, :]
-        colors[combined_mask, :] = [1, 0, 0]
+        target_mask = combined_mask & range_mask
+        animal_points = points[target_mask, :]
+        colors[target_mask, :] = [1, 0, 0]
         self.current_pcd.colors = o3d.utility.Vector3dVector(colors)
         self.record_values[self.idx] = []
         for i in range(animal_points.shape[0]):
