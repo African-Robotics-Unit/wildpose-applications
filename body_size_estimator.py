@@ -84,7 +84,7 @@ class KeyEvent:
         """
 
         # Create a mesh grid for the plane
-        x = np.linspace(-10, 10, 100)
+        x = np.linspace(0, 500, 100)
         y = np.linspace(-10, 10, 100)
         x, y = np.meshgrid(x, y)
         z = (-plane_model[3] - plane_model[0] *
@@ -239,7 +239,7 @@ class KeyEvent:
                                                  ransac_n=3,
                                                  num_iterations=1000)
         num_points = np.array(pcd.points).shape[0]
-        ground_mask = np.ones((num_points,))
+        ground_mask = np.ones(num_points)
         ground_mask[inliers] = 0
         ground_plane_mesh = self.get_plane_mesh(plane_model)
 
