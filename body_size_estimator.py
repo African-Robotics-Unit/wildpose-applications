@@ -3,6 +3,7 @@ import re
 import json
 import cv2
 import glob
+import pickle
 from typing import Any
 import open3d as o3d
 import numpy as np
@@ -143,7 +144,8 @@ class KeyEvent:
         imu_ys = [y[2] for y in angle_acc]
 
         # save the data
-        self.record_values
+        with open('saved_data.pkl', 'wb') as f:
+            pickle.dump(self.record_values, f)
 
         # plot
         fig, ax = plt.subplots()
