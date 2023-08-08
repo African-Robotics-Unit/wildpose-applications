@@ -24,7 +24,7 @@ def main():
     labels = labels.where(pd.notnull(labels), None).tolist()
 
     # make the y values
-    ys = [np.median(v) for v in data]
+    ys = [np.average(v) for v in data]
 
     # Interpolate ys onto a uniform grid
     interp_func = interp1d(timestamps, ys, kind='linear')
@@ -80,6 +80,7 @@ def main():
     # show the spectral plot
     plt.subplot(3, 1, 3)
     plt.plot(f, pgram)
+    plt.axvspan(lowcut, highcut, color='yellow', alpha=0.5)
     plt.title('Lomb-Scargle Periodogram')
     plt.xlabel('Frequency (Hz)')
     plt.ylabel('Amplitude')
