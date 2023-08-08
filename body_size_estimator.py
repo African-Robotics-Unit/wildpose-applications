@@ -127,15 +127,6 @@ class KeyEvent:
 
         # gather the data values
         xs = self.timestamps
-        ys = []
-        yerr_negative = []
-        yerr_positive = []
-        for values in self.record_values:
-            tmp = [v for v in values if v > 0.001]
-            y = np.average(tmp)
-            ys.append(y)
-            yerr_negative.append(y - np.min(tmp))
-            yerr_positive.append(np.max(tmp) - y)
 
         # gather the IMU data
         imu_xs = []
@@ -150,6 +141,9 @@ class KeyEvent:
         angle_acc = [y for x, y in sorted(zip(imu_xs, angle_acc))]
         imu_xs = sorted(imu_xs)
         imu_ys = [y[2] for y in angle_acc]
+
+        # save the data
+        self.record_values
 
         # plot
         fig, ax = plt.subplots()
@@ -228,7 +222,7 @@ class KeyEvent:
         # Remove ground plane
         plane_model, inliers = pcd.segment_plane(distance_threshold=0.01,
                                                  ransac_n=3,
-                                                 num_iterations=1000)
+                                                 num_iterations=10000)
         num_points = np.array(pcd.points).shape[0]
         ground_mask = np.ones(num_points)
         ground_mask[inliers] = 0
@@ -257,8 +251,8 @@ class KeyEvent:
         self.current_pcd.colors = o3d.utility.Vector3dVector(colors)
         self.record_values[self.idx] = []
         for i in range(animal_points.shape[0]):
-            # v = plane2point_distance(plane_model, animal_points[i, :])
-            v = animal_points[i, 2]
+            v = plane2point_distance(plane_model, animal_points[i, :])
+            # v = animal_points[i, 2]
             self.record_values[self.idx].append(v)
 
         # update the scene
