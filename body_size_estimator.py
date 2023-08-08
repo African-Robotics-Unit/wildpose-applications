@@ -145,7 +145,10 @@ class KeyEvent:
 
         # save the data
         with open('saved_data.pkl', 'wb') as f:
-            pickle.dump(self.record_values, f)
+            pickle.dump({
+                'timestamp': self.timestamps,
+                'data': self.record_values
+            }, f)
 
         # plot
         fig, ax = plt.subplots()
@@ -224,7 +227,7 @@ class KeyEvent:
         # Remove ground plane
         plane_model, inliers = pcd.segment_plane(distance_threshold=0.01,
                                                  ransac_n=3,
-                                                 num_iterations=10000)
+                                                 num_iterations=50000)
         num_points = np.array(pcd.points).shape[0]
         ground_mask = np.ones(num_points)
         ground_mask[inliers] = 0

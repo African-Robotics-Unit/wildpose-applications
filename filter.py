@@ -3,8 +3,12 @@ import pickle
 
 def main():
     # load the data
-    with open('file.pkl', 'rb') as f:
-        myvar = pickle.load(f)
+    with open('saved_data.pkl', 'rb') as f:
+        input_data = pickle.load(f)
+
+    # show the spectral plot
+
+    # band pass filter
 
 
 if __name__ == '__main__':
