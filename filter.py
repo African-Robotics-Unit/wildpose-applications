@@ -34,7 +34,7 @@ def main():
         len(timestamps))
     uniform_ys = interp_func(uniform_timestamps)
 
-    # Design a band-pass filter for the frequency range from 0.75 to 1.5 Hz
+    # Design a band-pass filter for the frequency range
     fs = 1 / np.mean(np.diff(uniform_timestamps))  # Sampling frequency
     lowcut = 0.5
     highcut = 1.5
