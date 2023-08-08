@@ -76,6 +76,7 @@ class KeyEvent:
         self.intrinsic_mat = intrinsic_mat
         self.extrinsic_mat = extrinsic_mat
         self.imu_data = img_data
+        self.global_plane_model = None
 
         self.record_values = [0] * len(self.pcd_fpaths)
 
@@ -225,9 +226,13 @@ class KeyEvent:
             rgb_pcd[:, 3:])
 
         # Remove ground plane
-        plane_model, inliers = pcd.segment_plane(distance_threshold=0.01,
-                                                 ransac_n=3,
-                                                 num_iterations=1000)
+        if self.global_plane_model is None:
+            plane_model, inliers = pcd.segment_plane(distance_threshold=0.01,
+                                                     ransac_n=3,
+                                                     num_iterations=10000)
+        else:
+            plane_model = self.global_plane_model
+            inliers = []
         num_points = np.array(pcd.points).shape[0]
         ground_mask = np.ones(num_points)
         ground_mask[inliers] = 0
@@ -271,6 +276,34 @@ class KeyEvent:
             print(os.path.basename(self.pcd_fpaths[self.idx]))
 
         self.increment_pcd_index()
+        return True
+
+    def global_ground_plane(self, vis):
+        # reset the scene
+        viewpoint_param = vis.get_view_control().convert_to_pinhole_camera_parameters()
+        if self.current_pcd is not None:
+            vis.clear_geometries()
+
+        # load all the point cloud frames
+        accumulated_pcd = o3d.geometry.PointCloud()
+        for pcd_fpath in tqdm(self.pcd_fpaths):
+            pcd = load_pcd(pcd_fpath, mode=self.pcd_mode)
+            accumulated_pcd += pcd
+
+        # estimate the global ground plane
+        print('generating the ground...')
+        global_plane_model, _ = accumulated_pcd.segment_plane(distance_threshold=0.01,
+                                                              ransac_n=3,
+                                                              num_iterations=1000)
+        print('Done!')
+        self.global_plane_model = global_plane_model
+        ground_plane_mesh = self.get_plane_mesh(global_plane_model)
+
+        # update the scene
+        vis.add_geometry(accumulated_pcd)
+        vis.add_geometry(ground_plane_mesh)
+        vis.get_view_control().convert_from_pinhole_camera_parameters(viewpoint_param)
+
         return True
 
     def increment_pcd_index(self,):
@@ -340,6 +373,7 @@ def main():
     vis.create_window()
     # register key callback functions with GLFW_KEY
     vis.register_key_callback(77, event_handler.get_plot)  # m
+    vis.register_key_callback(71, event_handler.global_ground_plane)  # g
     vis.register_key_callback(32, event_handler.update_pcd)  # space
     vis.add_geometry(init_geometry)
     opt = vis.get_render_option()
