@@ -3,7 +3,7 @@ import numpy as np
 import pickle
 import pandas as pd
 import matplotlib.pyplot as plt
-from scipy.signal import lombscargle, butter, filtfilt
+from scipy.signal import lombscargle, butter, filtfilt, detrend
 from scipy.interpolate import interp1d
 
 from utils.file_loader import load_config_file
@@ -43,7 +43,7 @@ def main():
     low = lowcut / nyquist
     high = highcut / nyquist
     b, a = butter(order, [low, high], btype='band')
-    y_filtered = filtfilt(b, a, uniform_ys)
+    y_filtered = filtfilt(b, a, detrend(uniform_ys))
 
     # show the original plot
     plt.subplot(3, 1, 1)
