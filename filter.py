@@ -36,14 +36,14 @@ def main():
 
     # Design a band-pass filter for the frequency range
     fs = 1 / np.mean(np.diff(uniform_timestamps))  # Sampling frequency
-    lowcut = 0.5
-    highcut = 1.5
+    lowcut = 0.75
+    highcut = 1.4
     order = 6
     nyquist = 0.5 * fs
     low = lowcut / nyquist
     high = highcut / nyquist
     b, a = butter(order, [low, high], btype='band')
-    y_filtered = filtfilt(b, a, detrend(uniform_ys))
+    y_filtered = filtfilt(b, a, uniform_ys)
 
     # show the original plot
     plt.subplot(3, 1, 1)
