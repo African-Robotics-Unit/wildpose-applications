@@ -48,7 +48,7 @@ def main():
     # show the original plot
     plt.subplot(3, 1, 1)
     plt.plot(timestamps, ys)
-    plt.title('Original Plot')
+    # plt.title('Original Plot')
     plt.xlabel('Time')
     plt.ylabel('Amplitude')
 
@@ -69,7 +69,7 @@ def main():
         ymin=ymin, ymax=ymax,
         colors='blue', ls='--'
     )
-    plt.title('Filtered Plot')
+    # plt.title('Filtered Plot')
     plt.xlabel('Time')
     plt.ylabel('Amplitude')
 
@@ -81,9 +81,11 @@ def main():
     plt.subplot(3, 1, 3)
     plt.plot(f, pgram)
     plt.axvspan(lowcut, highcut, color='yellow', alpha=0.5)
-    plt.title('Lomb-Scargle Periodogram')
+    # plt.title('Lomb-Scargle Periodogram')
     plt.xlabel('Frequency (Hz)')
     plt.ylabel('Amplitude')
+
+    plt.savefig("output.pdf", format="pdf", bbox_inches="tight")
     plt.show()
 
 
