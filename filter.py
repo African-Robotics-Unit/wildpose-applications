@@ -16,12 +16,15 @@ def main():
     # load the data
     with open('saved_data.pkl', 'rb') as f:
         input_data = pickle.load(f)
-    timestamps = input_data['timestamp']
+    timestamps = np.array(input_data['timestamp'])
     data = input_data['data']
 
     df = pd.read_excel(os.path.join(config['scene_dir'], 'body_state.xlsx'))
     labels = df['state']
     labels = labels.where(pd.notnull(labels), None).tolist()
+
+    # set the start from t=0
+    timestamps = timestamps - timestamps[0]
 
     # make the y values
     ys = [np.average(v) for v in data]
@@ -81,11 +84,11 @@ def main():
     plt.subplot(3, 1, 3)
     plt.plot(f, pgram)
     plt.axvspan(lowcut, highcut, color='yellow', alpha=0.5)
-    # plt.title('Lomb-Scargle Periodogram')
     plt.xlabel('Frequency (Hz)')
     plt.ylabel('Amplitude')
 
-    plt.savefig("output.pdf", format="pdf", bbox_inches="tight")
+    for fmt in ['svg', 'pdf']:
+        plt.savefig(f"output.{fmt}", format=fmt, bbox_inches="tight")
     plt.show()
 
 
