@@ -1,8 +1,6 @@
 import os
-import re
 import glob
 import json
-import matplotlib.pyplot as plt
 import pandas as pd
 import numpy as np
 
@@ -23,19 +21,29 @@ def main():
     end_time = get_timestamp_from_pcd_fpath(lidar_fpaths[-1])
 
     # extract the IMU data within the time
+    def imu_frame2timestamp(imu_frame):
+        return float(
+            str(imu_frame['timestamp_sec']) + '.' + str(imu_frame['timestamp_nanosec']))
     imu_frames = []
     for imu_frame in imu_data:
-        timestamp = float(
-            str(imu_frame['timestamp_sec']) + '.' + str(imu_frame['timestamp_nanosec']))
+        timestamp = imu_frame2timestamp(imu_frame)
         if start_time <= timestamp <= end_time:
             imu_frames.append(imu_frame)
 
     # make the csv file
     column_names = \
-        [f'linear_acceleration_{x}' for x in ['x', 'y', 'z']] + \
-        [f'orientation_{x}' for x in ['x', 'y', 'z', 'w']] + \
-        [f'linear_acceleration_{x}' for x in ['x', 'y', 'z']] + \
-
+        ['timestamp'] + \
+        [f'gyro_{x} (rad/s)' for x in ['x', 'y', 'z']] + \
+        [f'acc_{x} (g)' for x in ['x', 'y', 'z']]
+    data = []
+    for imu_frame in imu_frames:
+        row = \
+            [imu_frame2timestamp(imu_frame)] + \
+            imu_frame['angular_velocity'] + \
+            imu_frame['linear_acceleration']
+        data.append(row)
+    df = pd.DataFrame(data, columns=column_names)
+    df.to_csv(os.path.join(data_dir, 'imu.csv'))
 
 
 if __name__ == '__main__':
