@@ -291,34 +291,27 @@ def extract_rgb_from_image_pure(
     return colors, valid_mask
 
 
-def visualize_open3d(pcd_with_rgb, obj_pos_colors,
+def visualize_open3d(all_pcd, obj_pos_colors,
                      obj_dict, cam_plotter=None, obj_points=[]):
     vis = o3d.visualization.Visualizer()
     vis.create_window()
     view_ctl = vis.get_view_control()  # Set the viewpoint
 
-    all_pcd = o3d.geometry.PointCloud()
-    all_pcd.points = o3d.utility.Vector3dVector(pcd_with_rgb[:, :3])
-    all_pcd.colors = o3d.utility.Vector3dVector(pcd_with_rgb[:, 3:])
+    # import matplotlib
+    # cmap = matplotlib.cm.get_cmap('jet')
+    # depth_values = pcd_with_rgb[:,2]
+    # rgb_values = []
+    # max_depth = 100.0
+    # depth_values = np.clip(depth_values, 0, 120)
+    # depth_values = depth_values/max_depth
+    # for idx in range(len(depth_values)):
 
-    '''
-    ##
-    import matplotlib
-    cmap = matplotlib.cm.get_cmap('jet')
-    depth_values = pcd_with_rgb[:,2]
-    rgb_values = []
-    max_depth = 100.0
-    depth_values = np.clip(depth_values, 0, 120)
-    depth_values = depth_values/max_depth
-    for idx in range(len(depth_values)):
+    #     color = cmap(depth_values[idx])
+    #     rgb_values.append([color[0],color[1],color[2]])
 
-        color = cmap(depth_values[idx])
-        rgb_values.append([color[0],color[1],color[2]])
+    # rgb_values = np.array(rgb_values)
+    # all_pcd.colors = o3d.utility.Vector3dVector(rgb_values)
 
-    rgb_values = np.array(rgb_values)
-    all_pcd.colors = o3d.utility.Vector3dVector(rgb_values)
-    ##
-    '''
     if cam_plotter is not None:
         vis.add_geometry(cam_plotter)
     vis.add_geometry(all_pcd)
@@ -330,6 +323,10 @@ def visualize_open3d(pcd_with_rgb, obj_pos_colors,
 
     parameters = o3d.io.read_pinhole_camera_parameters("param_lion.json")
     view_ctl.convert_from_pinhole_camera_parameters(parameters)
+
+    opt = vis.get_render_option()
+    opt.show_coordinate_frame = True
+    opt.background_color = np.asarray([0.7, 0.7, 0.7])
 
     vis.run()
     vis.poll_events()
@@ -610,8 +607,14 @@ if __name__ == "__main__":
     pcd_with_rgb = np.concatenate([pcd_in_cam, colors], 1)
     pcd_in_image = pcd_in_image[valid_mask]
 
+    all_pcd = o3d.geometry.PointCloud()
+    all_pcd.points = o3d.utility.Vector3dVector(pcd_with_rgb[:, :3])
+    all_pcd.colors = o3d.utility.Vector3dVector(pcd_with_rgb[:, 3:])
+    output_fpath = os.path.join(base_dir, "coloured_output.pcd")
+    o3d.io.write_point_cloud(output_fpath, all_pcd)
+
     pcd_img = visualize_open3d(
-        pcd_with_rgb,
+        all_pcd,
         [],
         img_dict[key],
         cam_plotter,
