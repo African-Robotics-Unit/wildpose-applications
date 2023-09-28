@@ -23,7 +23,8 @@ COLORS = [
     {"color": [250, 170, 30], "isthing": 1, "id": 10, "name": "traffic light"},
     {"color": [100, 170, 30], "isthing": 1, "id": 11, "name": "fire hydrant"},
     {"color": [220, 220, 0], "isthing": 1, "id": 13, "name": "stop sign"},
-    {"color": [175, 116, 175], "isthing": 1, "id": 14, "name": "parking meter"},
+    {"color": [175, 116, 175], "isthing": 1,
+        "id": 14, "name": "parking meter"},
     {"color": [250, 0, 30], "isthing": 1, "id": 15, "name": "bench"},
     {"color": [165, 42, 42], "isthing": 1, "id": 16, "name": "bird"},
     {"color": [255, 77, 255], "isthing": 1, "id": 17, "name": "cat"},
@@ -49,7 +50,8 @@ COLORS = [
     {"color": [45, 89, 255], "isthing": 1, "id": 40, "name": "baseball glove"},
     {"color": [134, 134, 103], "isthing": 1, "id": 41, "name": "skateboard"},
     {"color": [145, 148, 174], "isthing": 1, "id": 42, "name": "surfboard"},
-    {"color": [255, 208, 186], "isthing": 1, "id": 43, "name": "tennis racket"},
+    {"color": [255, 208, 186], "isthing": 1,
+        "id": 43, "name": "tennis racket"},
     {"color": [197, 226, 255], "isthing": 1, "id": 44, "name": "bottle"},
     {"color": [171, 134, 1], "isthing": 1, "id": 46, "name": "wine glass"},
     {"color": [109, 63, 54], "isthing": 1, "id": 47, "name": "cup"},
@@ -108,7 +110,8 @@ COLORS = [
     {"color": [193, 0, 92], "isthing": 0, "id": 138, "name": "net"},
     {"color": [76, 91, 113], "isthing": 0, "id": 141, "name": "pillow"},
     {"color": [255, 180, 195], "isthing": 0, "id": 144, "name": "platform"},
-    {"color": [106, 154, 176], "isthing": 0, "id": 145, "name": "playingfield"},
+    {"color": [106, 154, 176], "isthing": 0,
+        "id": 145, "name": "playingfield"},
     {"color": [230, 150, 140], "isthing": 0, "id": 147, "name": "railroad"},
     {"color": [60, 143, 255], "isthing": 0, "id": 148, "name": "river"},
     {"color": [128, 64, 128], "isthing": 0, "id": 149, "name": "road"},
@@ -125,139 +128,179 @@ COLORS = [
     {"color": [7, 246, 231], "isthing": 0, "id": 176, "name": "wall-tile"},
     {"color": [107, 255, 200], "isthing": 0, "id": 177, "name": "wall-wood"},
     {"color": [58, 41, 149], "isthing": 0, "id": 178, "name": "water-other"},
-    {"color": [183, 121, 142], "isthing": 0, "id": 180, "name": "window-blind"},
+    {"color": [183, 121, 142], "isthing": 0,
+        "id": 180, "name": "window-blind"},
     {"color": [255, 73, 97], "isthing": 0, "id": 181, "name": "window-other"},
     {"color": [107, 142, 35], "isthing": 0, "id": 184, "name": "tree-merged"},
-    {"color": [190, 153, 153], "isthing": 0, "id": 185, "name": "fence-merged"},
-    {"color": [146, 139, 141], "isthing": 0, "id": 186, "name": "ceiling-merged"},
-    {"color": [70, 130, 180], "isthing": 0, "id": 187, "name": "sky-other-merged"},
-    {"color": [134, 199, 156], "isthing": 0, "id": 188, "name": "cabinet-merged"},
-    {"color": [209, 226, 140], "isthing": 0, "id": 189, "name": "table-merged"},
-    {"color": [96, 36, 108], "isthing": 0, "id": 190, "name": "floor-other-merged"},
-    {"color": [96, 96, 96], "isthing": 0, "id": 191, "name": "pavement-merged"},
-    {"color": [64, 170, 64], "isthing": 0, "id": 192, "name": "mountain-merged"},
-    {"color": [152, 251, 152], "isthing": 0, "id": 193, "name": "grass-merged"},
+    {"color": [190, 153, 153], "isthing": 0,
+        "id": 185, "name": "fence-merged"},
+    {"color": [146, 139, 141], "isthing": 0,
+        "id": 186, "name": "ceiling-merged"},
+    {"color": [70, 130, 180], "isthing": 0,
+        "id": 187, "name": "sky-other-merged"},
+    {"color": [134, 199, 156], "isthing": 0,
+        "id": 188, "name": "cabinet-merged"},
+    {"color": [209, 226, 140], "isthing": 0,
+        "id": 189, "name": "table-merged"},
+    {"color": [96, 36, 108], "isthing": 0,
+        "id": 190, "name": "floor-other-merged"},
+    {"color": [96, 96, 96], "isthing": 0,
+        "id": 191, "name": "pavement-merged"},
+    {"color": [64, 170, 64], "isthing": 0,
+        "id": 192, "name": "mountain-merged"},
+    {"color": [152, 251, 152], "isthing": 0,
+        "id": 193, "name": "grass-merged"},
     {"color": [208, 229, 228], "isthing": 0, "id": 194, "name": "dirt-merged"},
-    {"color": [206, 186, 171], "isthing": 0, "id": 195, "name": "paper-merged"},
-    {"color": [152, 161, 64], "isthing": 0, "id": 196, "name": "food-other-merged"},
-    {"color": [116, 112, 0], "isthing": 0, "id": 197, "name": "building-other-merged"},
+    {"color": [206, 186, 171], "isthing": 0,
+        "id": 195, "name": "paper-merged"},
+    {"color": [152, 161, 64], "isthing": 0,
+        "id": 196, "name": "food-other-merged"},
+    {"color": [116, 112, 0], "isthing": 0,
+        "id": 197, "name": "building-other-merged"},
     {"color": [0, 114, 143], "isthing": 0, "id": 198, "name": "rock-merged"},
-    {"color": [102, 102, 156], "isthing": 0, "id": 199, "name": "wall-other-merged"},
+    {"color": [102, 102, 156], "isthing": 0,
+        "id": 199, "name": "wall-other-merged"},
     {"color": [250, 141, 255], "isthing": 0, "id": 200, "name": "rug-merged"},
 ]
-colors_indice = [0,5,35,15,15]
-#colors_indice = [0,5,10,15,20,25,30,35,13,45,50,55,60,65,70]
+colors_indice = [0, 5, 35, 15, 15]
+# colors_indice = [0,5,10,15,20,25,30,35,13,45,50,55,60,65,70]
 CHOSEN_COLOR = np.array([COLORS[5]['color']])[0]
 
-def make_intrinsic(fx,fy,cx,cy):
 
+def make_intrinsic(fx, fy, cx, cy):
     intrinsic_mat = np.eye(4)
-    intrinsic_mat[0,0] = fx; intrinsic_mat[0,2] = cx
-    intrinsic_mat[1,1] = fy; intrinsic_mat[1,2] = cy
-    
+    intrinsic_mat[0, 0] = fx
+    intrinsic_mat[0, 2] = cx
+    intrinsic_mat[1, 1] = fy
+    intrinsic_mat[1, 2] = cy
+
     return intrinsic_mat
+
 
 def make_extrinsic(rot_mat, translation):
 
     extrinsic_mat = np.eye(4)
-    extrinsic_mat[:3,:3] = rot_mat
-    extrinsic_mat[:-1,-1] = translation
-    extrinsic_mat[-1,-1] = 1
+    extrinsic_mat[:3, :3] = rot_mat
+    extrinsic_mat[:-1, -1] = translation
+    extrinsic_mat[-1, -1] = 1
 
     return extrinsic_mat
 
+
 def lidar2cam_projection(pcd, extrinsic):
-    velo = np.insert(pcd,3,1,axis=1).T
-    velo = np.delete(velo,np.where(velo[0,:]<0),axis=1)
+    velo = np.insert(pcd, 3, 1, axis=1).T
+    velo = np.delete(velo, np.where(velo[0, :] < 0), axis=1)
     pcd_in_cam = extrinsic.dot(velo)
 
     return pcd_in_cam
+
+
 def cam2image_projection(pcd, intrinsic):
 
     pcd_in_image = intrinsic.dot(pcd_in_cam)
-    pcd_in_image[:2] /= pcd_in_image[2,:]
+    pcd_in_image[:2] /= pcd_in_image[2, :]
 
     return pcd_in_image
 
-def get_3D_by_2Dloc(pcd_in_image, pcd_in_cam, loc_yx_2d, width,height):
 
-    #valid_mask = (pcd_in_image[:,0] >= 0) * (pcd_in_image[:,0] < width) * (pcd_in_image[:,1] >= 0) * (pcd_in_image[:,1] < height) * (pcd_in_image[:,2] > 0)
-    
-    pixel_locs = np.concatenate([pcd_in_image[:,1][:,None], pcd_in_image[:,0][:,None]],1)
+def get_3D_by_2Dloc(pcd_in_image, pcd_in_cam, loc_yx_2d, width, height):
+
+    # valid_mask = (pcd_in_image[:,0] >= 0) * (pcd_in_image[:,0] < width) * (pcd_in_image[:,1] >= 0) * (pcd_in_image[:,1] < height) * (pcd_in_image[:,2] > 0)
+
+    pixel_locs = np.concatenate(
+        [pcd_in_image[:, 1][:, None], pcd_in_image[:, 0][:, None]], 1)
     pixel_locs = pixel_locs.astype(int)
-    
 
-    eu_dist = np.sqrt(np.sum((pixel_locs-loc_yx_2d)**2,axis=1))
+    eu_dist = np.sqrt(np.sum((pixel_locs - loc_yx_2d)**2, axis=1))
     closest_yx_idx = np.argmin(eu_dist)
-    
+
     closest_pos_3D = pcd_in_cam[closest_yx_idx]
     closest_pos_2D = pixel_locs[closest_yx_idx]
     return closest_pos_3D, closest_pos_2D
-def extract_rgb_from_image(pcd_in_image, pcd_in_cam, obj_masks, obj_dict, width, height):
 
-    valid_mask = (pcd_in_image[:,0] >= 0) * (pcd_in_image[:,0] < width) * (pcd_in_image[:,1] >= 0) * (pcd_in_image[:,1] < height) * (pcd_in_image[:,2] > 0)
-    
-    pixel_locs = np.concatenate([pcd_in_image[valid_mask,1][:,None], pcd_in_image[valid_mask,0][:,None]],1)#yx
+
+def extract_rgb_from_image(pcd_in_image, pcd_in_cam,
+                           obj_masks, obj_dict, width, height):
+
+    valid_mask = (pcd_in_image[:,
+                               0] >= 0) * (pcd_in_image[:,
+                                                        0] < width) * (pcd_in_image[:,
+                                                                                    1] >= 0) * (pcd_in_image[:,
+                                                                                                             1] < height) * (pcd_in_image[:,
+                                                                                                                                          2] > 0)
+
+    pixel_locs = np.concatenate(
+        [pcd_in_image[valid_mask, 1][:, None], pcd_in_image[valid_mask, 0][:, None]], 1)  # yx
     pixel_locs = pixel_locs.astype(int)
     valid_locs = np.where(valid_mask)[0]
-    
+
     pcd_in_image_valid = pcd_in_image[valid_locs]
-    
-    colors = np.zeros((len(pcd_in_image_valid),3))
-    
+
+    colors = np.zeros((len(pcd_in_image_valid), 3))
+
     obj_mask_from_color = np.zeros((len(pcd_in_image_valid)))
-    colors[:,:] = img[pixel_locs[:,0], pixel_locs[:,1]] / 255.0
-    
+    colors[:, :] = img[pixel_locs[:, 0], pixel_locs[:, 1]] / 255.0
+
     obj_points = []
     for obj_idx in range(len(obj_masks)):
         _, obj_id = obj_dict[obj_idx]
-        obj_mask = obj_masks[obj_idx,0]
-        valid_locs_mask = np.where(obj_mask[pixel_locs[:,0],pixel_locs[:,1]])
+        obj_mask = obj_masks[obj_idx, 0]
+        valid_locs_mask = np.where(
+            obj_mask[pixel_locs[:, 0], pixel_locs[:, 1]])
         valid_points = pcd_in_image_valid[valid_locs_mask[0]]
-        #mean = np.mean(valid_points,0)
-        #dists = np.abs(valid_points[:,2] - mean[2])
-        #dists = np.linalg.norm(valid_points - mean[None,:],axis=1)
-        
-        dists_mask = (valid_points[:,2] > 85) * (valid_points[:,2] < 100)
-        #dists_mask = (valid_points[:,0] > 10) * (valid_points[:,0] < 100)
+        # mean = np.mean(valid_points,0)
+        # dists = np.abs(valid_points[:,2] - mean[2])
+        # dists = np.linalg.norm(valid_points - mean[None,:],axis=1)
+
+        dists_mask = (valid_points[:, 2] > 85) * (valid_points[:, 2] < 100)
+        # dists_mask = (valid_points[:,0] > 10) * (valid_points[:,0] < 100)
         valid_locs_mask = valid_locs_mask[0][dists_mask]
-        
-        color_RGB = CHOSEN_COLOR#COLORS[colors_indice[obj_id]+12]['color']
-        
-        #colors[valid_locs_mask,0] = color_RGB[0]/255.0
-        #colors[valid_locs_mask,1] = color_RGB[1]/255.0
-        #colors[valid_locs_mask,2] = color_RGB[2]/255.0
+
+        color_RGB = CHOSEN_COLOR  # COLORS[colors_indice[obj_id]+12]['color']
+
+        # colors[valid_locs_mask,0] = color_RGB[0]/255.0
+        # colors[valid_locs_mask,1] = color_RGB[1]/255.0
+        # colors[valid_locs_mask,2] = color_RGB[2]/255.0
         obj_mask_from_color[valid_locs_mask] = obj_id
-        
+
         obj_points.append(pcd_in_cam[valid_locs_mask])
-        
 
-    return colors,  valid_mask, obj_points, obj_mask_from_color
+    return colors, valid_mask, obj_points, obj_mask_from_color
 
-def extract_rgb_from_image_pure(pcd_in_image, pcd_in_cam, obj_masks, obj_dict, width, height):
 
-    valid_mask = (pcd_in_image[:,0] >= 0) * (pcd_in_image[:,0] < width) * (pcd_in_image[:,1] >= 0) * (pcd_in_image[:,1] < height) * (pcd_in_image[:,2] > 0)
-    
-    pixel_locs = np.concatenate([pcd_in_image[valid_mask,1][:,None], pcd_in_image[valid_mask,0][:,None]],1)#yx
+def extract_rgb_from_image_pure(
+        pcd_in_image, pcd_in_cam, obj_masks, obj_dict, width, height):
+
+    valid_mask = (pcd_in_image[:,
+                               0] >= 0) * (pcd_in_image[:,
+                                                        0] < width) * (pcd_in_image[:,
+                                                                                    1] >= 0) * (pcd_in_image[:,
+                                                                                                             1] < height) * (pcd_in_image[:,
+                                                                                                                                          2] > 0)
+
+    pixel_locs = np.concatenate(
+        [pcd_in_image[valid_mask, 1][:, None], pcd_in_image[valid_mask, 0][:, None]], 1)  # yx
     pixel_locs = pixel_locs.astype(int)
     valid_locs = np.where(valid_mask)[0]
 
-    colors = np.zeros((len(pcd_in_image),3))
-    
-    #colors[:,:3] = 1.0
-    colors[valid_mask,:] = img[pixel_locs[:,0], pixel_locs[:,1]] / 255.0
-    
-    return colors,  valid_mask
+    colors = np.zeros((len(pcd_in_image), 3))
 
-def visualize_open3d(pcd_with_rgb, obj_pos_colors, obj_dict, cam_plotter=None, obj_points=[]):
-    vis = o3d.visualization.Visualizer() 
+    # colors[:,:3] = 1.0
+    colors[valid_mask, :] = img[pixel_locs[:, 0], pixel_locs[:, 1]] / 255.0
+
+    return colors, valid_mask
+
+
+def visualize_open3d(pcd_with_rgb, obj_pos_colors,
+                     obj_dict, cam_plotter=None, obj_points=[]):
+    vis = o3d.visualization.Visualizer()
     vis.create_window()
-    view_ctl = vis.get_view_control() # Set the viewpoint
+    view_ctl = vis.get_view_control()  # Set the viewpoint
 
     all_pcd = o3d.geometry.PointCloud()
-    all_pcd.points = o3d.utility.Vector3dVector(pcd_with_rgb[:,:3])
-    all_pcd.colors = o3d.utility.Vector3dVector(pcd_with_rgb[:,3:])
-   
+    all_pcd.points = o3d.utility.Vector3dVector(pcd_with_rgb[:, :3])
+    all_pcd.colors = o3d.utility.Vector3dVector(pcd_with_rgb[:, 3:])
+
     '''
     ##
     import matplotlib
@@ -268,101 +311,107 @@ def visualize_open3d(pcd_with_rgb, obj_pos_colors, obj_dict, cam_plotter=None, o
     depth_values = np.clip(depth_values, 0, 120)
     depth_values = depth_values/max_depth
     for idx in range(len(depth_values)):
-        
+
         color = cmap(depth_values[idx])
         rgb_values.append([color[0],color[1],color[2]])
-    
+
     rgb_values = np.array(rgb_values)
     all_pcd.colors = o3d.utility.Vector3dVector(rgb_values)
     ##
     '''
-    if cam_plotter != None:
+    if cam_plotter is not None:
         vis.add_geometry(cam_plotter)
     vis.add_geometry(all_pcd)
     view_ctl = vis.get_view_control()
-    
-    axes = o3d.geometry.TriangleMesh.create_coordinate_frame(size=1.0, origin=np.array([2, 0., 90.]))
-    vis.add_geometry(axes)
-    
-    
-    parameters = o3d.io.read_pinhole_camera_parameters("param_lion.json")
-    view_ctl.convert_from_pinhole_camera_parameters(parameters)    
 
-    
+    axes = o3d.geometry.TriangleMesh.create_coordinate_frame(
+        size=1.0, origin=np.array([2, 0., 90.]))
+    vis.add_geometry(axes)
+
+    parameters = o3d.io.read_pinhole_camera_parameters("param_lion.json")
+    view_ctl.convert_from_pinhole_camera_parameters(parameters)
+
     vis.run()
     vis.poll_events()
-    vis.update_renderer()   
+    vis.update_renderer()
     vis.capture_screen_image("tmp.png")
     vis.destroy_window()
 
     img = cv2.imread('tmp.png')
-    
+
     width, height = img.shape[1], img.shape[0]
 
-    cut_length_left = int(width/5)
-    cut_length_right = int(width/5)
-    cut_length_top = int(height/4)
-    cut_length_bottom = int(height/9)
-    img = img[cut_length_top : -cut_length_bottom, cut_length_left : -cut_length_right]
+    cut_length_left = int(width / 5)
+    cut_length_right = int(width / 5)
+    cut_length_top = int(height / 4)
+    cut_length_bottom = int(height / 9)
+    img = img[cut_length_top: -cut_length_bottom,
+              cut_length_left: -cut_length_right]
 
     return img
 
 
-def visualize_opencv(img, pcd_in_image, obj_masks, obj_dict, width, height, use_mask=True):
+def visualize_opencv(img, pcd_in_image, obj_masks,
+                     obj_dict, width, height, use_mask=True):
 
     img_bgr = cv2.cvtColor(img, cv2.COLOR_RGB2BGR)
-    
-    valid_mask = (pcd_in_image[:,0] >= 0) * (pcd_in_image[:,0] < width) * (pcd_in_image[:,1] >= 0) * (pcd_in_image[:,1] < height) * (pcd_in_image[:,2] > 0)
-    
-    pixel_locs = np.concatenate([pcd_in_image[valid_mask,1][:,None], pcd_in_image[valid_mask,0][:,None]],1)
+
+    valid_mask = (pcd_in_image[:,
+                               0] >= 0) * (pcd_in_image[:,
+                                                        0] < width) * (pcd_in_image[:,
+                                                                                    1] >= 0) * (pcd_in_image[:,
+                                                                                                             1] < height) * (pcd_in_image[:,
+                                                                                                                                          2] > 0)
+
+    pixel_locs = np.concatenate(
+        [pcd_in_image[valid_mask, 1][:, None], pcd_in_image[valid_mask, 0][:, None]], 1)
     pixel_locs = pixel_locs.astype(int)
 
-    
-   
-    
-    
     if use_mask == False:
         img_mask = np.zeros((img.shape[0], img.shape[1], 1), dtype=np.uint8)
-        img_mask[pixel_locs[:,0], pixel_locs[:,1]] = 1
-        img_bgr *= img_mask    
+        img_mask[pixel_locs[:, 0], pixel_locs[:, 1]] = 1
+        img_bgr *= img_mask
         img_bgr_canvas = np.copy(img_bgr)
 
         for valid_idx in range(len(pixel_locs)):
-            
-            color = img_bgr[pixel_locs[valid_idx,0],pixel_locs[valid_idx,1]]
 
-            cv2.circle(img_bgr_canvas, (pixel_locs[valid_idx,1], pixel_locs[valid_idx,0]), 
-                                                                3, (int(color[0]), int(color[1]), int(color[2])), -1)
+            color = img_bgr[pixel_locs[valid_idx, 0], pixel_locs[valid_idx, 1]]
+
+            cv2.circle(img_bgr_canvas, (pixel_locs[valid_idx, 1], pixel_locs[valid_idx, 0]),
+                       3, (int(color[0]), int(color[1]), int(color[2])), -1)
     else:
-        img_bgr_canvas = np.zeros((img.shape[0], img.shape[1], 3), dtype=np.uint8)
-        
+        img_bgr_canvas = np.zeros(
+            (img.shape[0], img.shape[1], 3), dtype=np.uint8)
+
         '''
         for valid_idx in range(len(pixel_locs)):
-            
+
             color = img_bgr[pixel_locs[valid_idx,0],pixel_locs[valid_idx,1]]
 
-            cv2.circle(img_bgr_canvas, (pixel_locs[valid_idx,1], pixel_locs[valid_idx,0]), 
+            cv2.circle(img_bgr_canvas, (pixel_locs[valid_idx,1], pixel_locs[valid_idx,0]),
                                                                 3, (int(color[0]), int(color[1]), int(color[2])), -1)
         '''
-        valid_locs = np.where(valid_mask)[0]    
+        valid_locs = np.where(valid_mask)[0]
         for obj_idx in range(len(obj_masks)):
             _, obj_id = obj_dict[obj_idx]
-            obj_mask = obj_masks[obj_idx,0]
-            valid_locs_mask = np.where(obj_mask[pixel_locs[:,0],pixel_locs[:,1]])
-           
+            obj_mask = obj_masks[obj_idx, 0]
+            valid_locs_mask = np.where(
+                obj_mask[pixel_locs[:, 0], pixel_locs[:, 1]])
+
             valid_locs_img = pixel_locs[valid_locs_mask[0]]
-            #valid_locs[valid_locs_mask]
-            color_RGB = CHOSEN_COLOR#COLORS[colors_indice[obj_id]+12]['color']
+            # valid_locs[valid_locs_mask]
+            # COLORS[colors_indice[obj_id]+12]['color']
+            color_RGB = CHOSEN_COLOR
             color_BGR = [color_RGB[2], color_RGB[1], color_RGB[0]]
-            #img_bgr_canvas[valid_locs_img[:,0],valid_locs_img[:,1],:] = 255
-            #pdb.set_trace()
+            # img_bgr_canvas[valid_locs_img[:,0],valid_locs_img[:,1],:] = 255
+            # pdb.set_trace()
             for valid_idx in range(len(valid_locs_img)):
-                cv2.circle(img_bgr_canvas, (valid_locs_img[valid_idx,1], valid_locs_img[valid_idx,0]), 
-                                                                5, (color_BGR[0],color_BGR[1],color_BGR[2]), -1)
+                cv2.circle(img_bgr_canvas, (valid_locs_img[valid_idx, 1], valid_locs_img[valid_idx, 0]),
+                           5, (color_BGR[0], color_BGR[1], color_BGR[2]), -1)
     return img_bgr_canvas
 
+
 def sync_lidar_and_rgb(file_path_lidar, file_path_rgb):
-    
 
     rgb_files = os.listdir(file_path_rgb)
     lidar_files = os.listdir(file_path_lidar)
@@ -373,10 +422,11 @@ def sync_lidar_and_rgb(file_path_lidar, file_path_rgb):
     for fp in rgb_files:
 
         if '.jpeg' in fp:
-            
-            second_rgb, decimal_rgb  = fp.split('.')[0].split('_')[1:3]
-            
-            second_rgb, decimal_rgb = int(second_rgb), float('0.'+ decimal_rgb)
+
+            second_rgb, decimal_rgb = fp.split('.')[0].split('_')[1:3]
+
+            second_rgb, decimal_rgb = int(
+                second_rgb), float('0.' + decimal_rgb)
             rgb_timestamp = second_rgb + decimal_rgb
 
             diff_list = []
@@ -384,36 +434,56 @@ def sync_lidar_and_rgb(file_path_lidar, file_path_rgb):
             for fp_lidar in lidar_files:
                 if 'DS' in fp_lidar:
                     continue
-                _,_,second_lidar, decimal_lidar = fp_lidar.split('.')[0].split('_')  
-                second_lidar, decimal_lidar = int(second_lidar), float('0.'+ decimal_lidar)
-                
-                lidar_timestamp = second_lidar+decimal_lidar
-                diff = abs( rgb_timestamp - lidar_timestamp)
-                
+                _, _, second_lidar, decimal_lidar = fp_lidar.split('.')[
+                    0].split('_')
+                second_lidar, decimal_lidar = int(
+                    second_lidar), float('0.' + decimal_lidar)
+
+                lidar_timestamp = second_lidar + decimal_lidar
+                diff = abs(rgb_timestamp - lidar_timestamp)
+
                 diff_list.append(diff)
                 lidar_fp_list.append(fp_lidar)
 
             diff_list = np.array(diff_list)
             matching_lidar_file = lidar_fp_list[np.argmin(diff_list)]
-            
-            rgb_list.append(file_path_rgb+fp)
-            assert os.path.exists(file_path_lidar+matching_lidar_file)
-            lidar_list.append(file_path_lidar+matching_lidar_file)
+
+            rgb_list.append(file_path_rgb + fp)
+            assert os.path.exists(file_path_lidar + matching_lidar_file)
+            lidar_list.append(file_path_lidar + matching_lidar_file)
 
     return lidar_list, rgb_list
-def construct_cam_plotter(scale=0.5, translation=(0,0,25)):
-    #Camera center is considered (0,0,0)
-    #Here we construct four edges of camera. This is only used for visualization.
-    
-    top_left = np.array([-scale + translation[0],scale + translation[1] ,0.0 + translation[2]]) #Top Left one
-    top_right = np.array([scale + translation[0],scale + translation[1],-0.0 + translation[2]]) #Top Right one
-    bottom_left = np.array([-scale + translation[0],-scale + translation[1],0.0 + translation[2]]) #Bottom Left one
-    bottom_right = np.array([scale + translation[0],-scale + translation[1],-0.0 + translation[2]]) #Bottom Right one
-    focal_point = np.array([0.0 + translation[0],0.0 + translation[1],-scale*2 + translation[2]])
-    
-    cam_plotter_array = np.array([top_left, top_right, bottom_left, bottom_right, focal_point])
 
-    return cam_plotter_array    
+
+def construct_cam_plotter(scale=0.5, translation=(0, 0, 25)):
+    # Camera center is considered (0,0,0)
+    # Here we construct four edges of camera. This is only used for
+    # visualization.
+
+    top_left = np.array([-scale + translation[0],
+                         scale + translation[1],
+                         0.0 + translation[2]])  # Top Left one
+    top_right = np.array([scale +
+                          translation[0], scale +
+                          translation[1], -
+                          0.0 +
+                          translation[2]])  # Top Right one
+    bottom_left = np.array([-scale + translation[0], -scale +
+                           translation[1], 0.0 + translation[2]])  # Bottom Left one
+    bottom_right = np.array([scale +
+                             translation[0], -
+                             scale +
+                             translation[1], -
+                             0.0 +
+                             translation[2]])  # Bottom Right one
+    focal_point = np.array(
+        [0.0 + translation[0], 0.0 + translation[1], -scale * 2 + translation[2]])
+
+    cam_plotter_array = np.array(
+        [top_left, top_right, bottom_left, bottom_right, focal_point])
+
+    return cam_plotter_array
+
 
 def overlay(image, mask, color, alpha, resize=None):
     """Combines image and its segmentation mask into a single image.
@@ -444,6 +514,8 @@ def overlay(image, mask, color, alpha, resize=None):
     image_combined = cv2.addWeighted(image, 1 - alpha, image_overlay, alpha, 0)
 
     return image_combined
+
+
 def get_2D_gt(gt_json_path):
 
     gt_json = json.load(open(gt_json_path, 'r'))
@@ -454,81 +526,93 @@ def get_2D_gt(gt_json_path):
 
     for idx in range(len(annotations)):
 
-       
         anno = annotations[idx]
         bbox = anno['bbox']
         img_id = anno['image_id']
         obj_id = anno['category_id']
         img_filename = images[img_id]['file_name'].split('/')[-1]
-        
+
         if img_filename not in img_dict:
             img_dict[img_filename] = []
-        img_dict[img_filename].append([bbox,obj_id])
+        img_dict[img_filename].append([bbox, obj_id])
     return img_dict
 
+
 if __name__ == "__main__":
-    
-    #######Setting parameters
+    data_dir = './data/giraffe_walk'
+
+    # Setting parameters
     camera_plot_lines = [
-        [4,0],[4,1],[4,2],[4,3],
-        [0,1],[1,3],[3,2],[2,0]
+        [4, 0], [4, 1], [4, 2], [4, 3],
+        [0, 1], [1, 3], [3, 2], [2, 0]
     ]
 
     cam_plotter_pose = construct_cam_plotter()
-    cam_plotter_colors = np.zeros((len(cam_plotter_pose),3))
+    cam_plotter_colors = np.zeros((len(cam_plotter_pose), 3))
 
-    cam_plotter= o3d.geometry.LineSet()
+    cam_plotter = o3d.geometry.LineSet()
     cam_plotter_colors = np.zeros(cam_plotter_pose.shape)
-    cam_plotter_colors[:,0] = 1.0
+    cam_plotter_colors[:, 0] = 1.0
 
     cam_plotter.points = o3d.utility.Vector3dVector(cam_plotter_pose)
     cam_plotter.lines = o3d.utility.Vector2iVector(camera_plot_lines)
     cam_plotter.colors = o3d.utility.Vector3dVector(cam_plotter_colors)
 
-    cam_params = json.load(open('manual_calibration.json', 'r'))
-    rot_mat = quaternion.as_rotation_matrix(quaternion.from_float_array(np.array([cam_params['extrinsics_R'][0], -cam_params['extrinsics_R'][1], -cam_params['extrinsics_R'][2], cam_params['extrinsics_R'][3] ])))
-    translation = np.array([cam_params['extrinsics_t'][0], cam_params['extrinsics_t'][1], cam_params['extrinsics_t'][2]])
+    with open(os.path.join(data_dir, 'manual_calibration.json'), 'r') as f:
+        cam_params = json.load(f)
+    rot_mat = quaternion.as_rotation_matrix(quaternion.from_float_array(np.array([
+        cam_params['extrinsics_R'][0],
+        -cam_params['extrinsics_R'][1],
+        -cam_params['extrinsics_R'][2],
+        cam_params['extrinsics_R'][3]
+    ])))
+    translation = np.array([
+        cam_params['extrinsics_t'][0],
+        cam_params['extrinsics_t'][1],
+        cam_params['extrinsics_t'][2]
+    ])
 
-    fx,fy,cx,cy = cam_params['intrinsics'][0], cam_params['intrinsics'][1], cam_params['intrinsics'][2], cam_params['intrinsics'][3]
-    IMG_WIDTH, IMG_HEIGHT = 1280,720
-    #######Ends Setting parameters
+    fx, fy, cx, cy = cam_params['intrinsics'][0], cam_params['intrinsics'][
+        1], cam_params['intrinsics'][2], cam_params['intrinsics'][3]
+    IMG_WIDTH, IMG_HEIGHT = 1280, 720
+    # Ends Setting parameters
 
-
-    base_path = './giraffe_walk_accumulated/'
-    img_dict = get_2D_gt(base_path+'train.json')
+    base_dir = os.path.join(data_dir, 'accumulation')
+    img_dict = get_2D_gt(os.path.join(base_dir, 'train.json'))
     mask_cnt = 0
 
-    rgb_path = base_path+'1.jpg'
-    lidar_path = base_path+'accumulation.pcd'
-    mask_path = base_path+'0.npy'
+    rgb_path = os.path.join(base_dir, '1.jpg')
+    lidar_path = os.path.join(data_dir, 'accumulation.pcd')
+    mask_path = os.path.join(base_dir, '0.npy')
     key = list(img_dict.keys())[0]
 
     mask_idx = np.load(mask_path)
 
     pcd_in_lidar = o3d.io.read_point_cloud(lidar_path)
-    pcd_in_lidar = np.asarray(pcd_in_lidar.points)  
+    pcd_in_lidar = np.asarray(pcd_in_lidar.points)
 
     img_bgr = cv2.imread(rgb_path)
     img = cv2.cvtColor(img_bgr, cv2.COLOR_BGR2RGB)
 
-
-
-    intrinsic = make_intrinsic(fx,fy,cx,cy)
+    intrinsic = make_intrinsic(fx, fy, cx, cy)
     extrinsic = make_extrinsic(rot_mat, translation)
 
     pcd_in_cam = lidar2cam_projection(pcd_in_lidar, extrinsic)
     pcd_in_image = cam2image_projection(pcd_in_cam, intrinsic)
 
-    pcd_in_cam = pcd_in_cam.T[:,:-1]
-    pcd_in_image = pcd_in_image.T[:,:-1]
+    pcd_in_cam = pcd_in_cam.T[:, :-1]
+    pcd_in_image = pcd_in_image.T[:, :-1]
 
-    colors, valid_mask, obj_points_colors, obj_mask_from_color = extract_rgb_from_image(pcd_in_image, pcd_in_cam, mask_idx, img_dict[key], width=IMG_WIDTH, height=IMG_HEIGHT)
+    colors, valid_mask, obj_points_colors, obj_mask_from_color = extract_rgb_from_image(
+        pcd_in_image, pcd_in_cam, mask_idx, img_dict[key], width=IMG_WIDTH, height=IMG_HEIGHT)
     pcd_in_cam = pcd_in_cam[valid_mask]
 
-
-    pcd_with_rgb = np.concatenate([pcd_in_cam, colors],1)
+    pcd_with_rgb = np.concatenate([pcd_in_cam, colors], 1)
     pcd_in_image = pcd_in_image[valid_mask]
 
-    pcd_img = visualize_open3d(pcd_with_rgb, [], img_dict[key], cam_plotter, obj_points_colors)
-    
-    
+    pcd_img = visualize_open3d(
+        pcd_with_rgb,
+        [],
+        img_dict[key],
+        cam_plotter,
+        obj_points_colors)
