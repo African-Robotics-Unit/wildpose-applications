@@ -308,3 +308,4 @@ pyrightconfig.json
 
 *.pth
 *.pkl
+results/**
