@@ -68,21 +68,29 @@ def main():
     # show the filtered plot
     plt.subplot(3, 1, 2)
     plt.plot(uniform_timestamps, y_filtered)
-    ymin = np.min(y_filtered)
-    ymax = np.max(y_filtered)
-    plt.vlines(
-        x=[t for i, t in enumerate(timestamps)
-            if labels[i] == 1],
-        ymin=ymin, ymax=ymax,
-        colors='red', ls='--'
-    )
-    plt.vlines(
-        x=[t for i, t in enumerate(timestamps)
-            if labels[i] == -1],
-        ymin=ymin, ymax=ymax,
-        colors='blue', ls='--'
-    )
-    # plt.title('Filtered Plot')
+    ta = None
+    tb = None
+    color = None
+    for i, t in enumerate(timestamps):
+        lbl = labels[i]
+        if (lbl == 1 or lbl == -1) and color is None:
+            ta = timestamps[i - 1]
+            if labels[i] == 1:
+                color = 'red'
+            elif labels[i] == -1:
+                color = 'blue'
+        elif color == 'red' and lbl != 1:
+            tb = timestamps[i]
+        elif color == 'blue' and lbl != -1:
+            tb = timestamps[i]
+        else:
+            continue
+
+        if ta is not None and tb is not None and color is not None:
+            plt.axvspan(ta, tb, color=color, alpha=0.3, linewidth=0)
+            ta = None
+            tb = None
+            color = None
     plt.xlabel('Time')
     plt.ylabel('Amplitude')
 
@@ -93,7 +101,7 @@ def main():
     # show the spectral plot
     plt.subplot(3, 1, 3)
     plt.plot(f, pgram)
-    plt.axvspan(lowcut, highcut, color='yellow', alpha=0.5)
+    plt.axvspan(lowcut, highcut, color='yellow', alpha=0.5, linewidth=0)
     plt.xlabel('Frequency (Hz)')
     plt.ylabel('Amplitude')
 
