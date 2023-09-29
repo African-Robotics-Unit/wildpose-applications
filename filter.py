@@ -9,9 +9,19 @@ from scipy.interpolate import interp1d
 from utils.file_loader import load_config_file
 
 
+CONFIG = {
+    "scene_dir": "data/lion_sleep3",
+    "pcd_dir": "data/lion_sleep3/lidar",
+    "sync_rgb_dir": "data/lion_sleep3/sync_rgb",
+    "mask_dir": "data/lion_sleep3/masks_lion2",
+    "textured_pcd_dir": "data/lion_sleep3/textured_pcds",
+    "bbox_info_fpath": "data/lion_sleep3/train.json",
+    "imu_fpath": "data/lion_sleep3/imu.json",
+}
+
+
 def main():
-    config_fpath = 'config.hjson'
-    config = load_config_file(config_fpath)
+    config = CONFIG
 
     # load the data
     with open('saved_data.pkl', 'rb') as f:
@@ -88,7 +98,7 @@ def main():
     plt.ylabel('Amplitude')
 
     for fmt in ['svg', 'pdf']:
-        plt.savefig(f"output.{fmt}", format=fmt, bbox_inches="tight")
+        plt.savefig(f"results/output.{fmt}", format=fmt, bbox_inches="tight")
     plt.show()
 
 
