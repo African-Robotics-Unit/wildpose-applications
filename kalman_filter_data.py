@@ -4,6 +4,7 @@ import json
 import re
 import pandas as pd
 import numpy as np
+import matplotlib.pyplot as plt
 
 from utils.format_conversion import get_timestamp_from_pcd_fpath
 
@@ -94,6 +95,8 @@ def main():
                 imu_frame['linear_acceleration']
             data.append(row)
         df = pd.DataFrame(data, columns=column_names)
+        df = df.sort_values(by=['imu_timestamp (s)'], ignore_index=True)
+        plt.plot(df['imu_timestamp (s)'])
         df.to_csv(f'results/kalman_filter_data_{key}.csv')
 
 
