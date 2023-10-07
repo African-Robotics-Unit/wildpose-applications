@@ -54,7 +54,7 @@ def main():
             names=['time', 'x', 'y', 'z'], header=0
         )
         df = df.where(df != -1e-6, other=np.nan)
-        df['time'] = timestamps[:len(df)]
+        df['time'] = timestamps
         dfs[key] = df
 
     # load other data
@@ -87,7 +87,7 @@ def main():
         data = []
         for imu_frame in imu_frames:
             imu_timestamp = imu_frame2timestamp(imu_frame)
-            position = get_position(imu_timestamp, dfs['01'])
+            position = get_position(imu_timestamp, dfs[key])
             row = \
                 [imu_timestamp] + \
                 position + \
