@@ -4,6 +4,7 @@ import glob
 import matplotlib.pyplot as plt
 import pandas as pd
 import numpy as np
+import scipy.ndimage
 
 
 def get_timestamp_from_pcd_fpath(fpath: str) -> float:
@@ -14,6 +15,20 @@ def get_timestamp_from_pcd_fpath(fpath: str) -> float:
     timestamp = float(fname[-2] + '.' + fname[-1])
 
     return timestamp
+
+
+def median_filter_3d_positions(dfs, filter_size=3):
+    filtered_dfs = {}
+    for key, df in dfs.items():
+        filtered_df = df.copy()
+        filtered_df['x'] = scipy.ndimage.median_filter(
+            df['x'], size=filter_size)
+        filtered_df['y'] = scipy.ndimage.median_filter(
+            df['y'], size=filter_size)
+        filtered_df['z'] = scipy.ndimage.median_filter(
+            df['z'], size=filter_size)
+        filtered_dfs[key] = filtered_df
+    return filtered_dfs
 
 
 def main():
@@ -35,6 +50,7 @@ def main():
         )
         df = df.where(df != -1e-6, other=np.nan)
         dfs[key] = df
+    dfs = median_filter_3d_positions(dfs, filter_size=5)
 
     # load timestamp
     csv_fpath = os.path.join(data_dir, 'lidar_frames.csv')
