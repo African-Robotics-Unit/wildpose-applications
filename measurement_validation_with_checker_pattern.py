@@ -10,7 +10,6 @@ from utils import camera as camera_utils
 
 
 ECAL_FOLDER = '/Volumes/Expansion/Calibration/ecal_meas/2023-02-04_15-20-34.496_wildpose_v1.1'
-# ECAL_FOLDER = '/Volumes/Expansion/Calibration/ecal_meas/2023-02-04_15-27-37.535_wildpose_v1.1'
 CAMERA_PARAM_FILENAME = 'manual_calibration.json'
 FRAME_START_INDEX = 0
 FRAME_END_INDEX = 10
