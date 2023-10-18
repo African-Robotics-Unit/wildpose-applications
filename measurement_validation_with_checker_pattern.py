@@ -37,31 +37,31 @@ def find_checkerboard_corners(image_path, pattern_size):
         print('INFO: the corner could not be detected.')
         return DEFAULT_CORNERS
 
-def closest_point(target, point_cloud):
+def closest_point(target, point_cloud_2d):
     """
     Find the closest point to the target point from a 2D point cloud.
 
     Parameters:
     - target (np.array): A numpy array of shape [1, 2] representing the target point.
-    - point_cloud (np.array): A numpy array of shape [N, 2] representing the 2D point cloud.
+    - point_cloud_2d (np.array): A numpy array of shape [N, 2] representing the 2D point cloud.
 
     Returns:
     - closest_pt (np.array): The closest point in the point cloud to the target.
     - min_distance (float): The distance between the closest point and the target.
     """
     # Calculate the squared Euclidean distances
-    squared_distances = np.sum((point_cloud - target)**2, axis=1)
+    squared_distances = np.sum((point_cloud_2d - target)**2, axis=1)
 
     # Find the index of the minimum distance
     min_index = np.argmin(squared_distances)
 
     # Retrieve the closest point
-    closest_pt = point_cloud[min_index]
+    closest_2dpt = point_cloud_2d[min_index]
 
     # Calculate the minimum distance (Euclidean)
     min_distance = np.sqrt(squared_distances[min_index])
 
-    return closest_pt, min_index
+    return closest_2dpt, min_index
 
 
 def main():
@@ -98,10 +98,14 @@ def main():
 
         # get 3D point indices corresponding with checker pattern
         for pt2d_a, pt2d_b in combinations(corners, 2):
-            pt3d_a, _ = closest_point(pt2d_a, pts_in_img[:, :2])
-            pt3d_b, _ = closest_point(pt2d_b, pts_in_img[:, :2])
+            _, pt_idx_a = closest_point(pt2d_a, pts_in_img[:, :2])
+            _, pt_idx_b = closest_point(pt2d_b, pts_in_img[:, :2])
+            pt3d_a = pts_in_ptc[pt_idx_a, :]
+            pt3d_b = pts_in_ptc[pt_idx_b, :]
             distance = np.linalg.norm(pt3d_a - pt3d_b)
             print(f'{distance}m between {pt3d_a} and {pt3d_b}')
+
+        break
 
 
 if __name__ == '__main__':
