@@ -16,9 +16,9 @@ FRAME_START_INDEX = 0
 FRAME_END_INDEX = 10
 PATTERN_SIZE = (7, 10)  # for example
 DEFAULT_CORNERS = [
-    [0, 1],
-    [0, 2],
-    [0, 3],
+    [248, 72],
+    [1126, 60],
+    [251, 662],
 ]
 
 
@@ -76,7 +76,7 @@ def main():
     merged_pcd = o3d.geometry.PointCloud()
     for pcd_fpath in pcd_fpaths:
         merged_pcd += load_pcd(pcd_fpath, mode='open3d')
-    pts_in_ptc  = merged_pcd.points
+    pts_in_ptc = np.array(merged_pcd.points)    # [N, 3]
 
     # load the camera parameters
     calib_fpath = os.path.join(ECAL_FOLDER, CAMERA_PARAM_FILENAME)
@@ -91,18 +91,15 @@ def main():
             print(f"Error: failed to find corners in {image_path}")
             continue
 
-        # Assuming merged_pcd contains the points
-        points = np.asarray(merged_pcd.points)
-
         # project the point cloud to camera and its image sensor
         pts_in_cam = camera_utils.lidar2cam_projection(pts_in_ptc, extrinsic_mat)
         pts_in_img = camera_utils.cam2image_projection(pts_in_cam, intrinsic_mat)
-        pts_in_img = pts_in_img.T[:, :-1]
+        pts_in_img = pts_in_img.T[:, :-1]   # [N, 3]
 
         # get 3D point indices corresponding with checker pattern
         for pt2d_a, pt2d_b in combinations(corners, 2):
-            pt3d_a, _ = closest_point(pt2d_a, pts_in_ptc)
-            pt3d_b, _ = closest_point(pt2d_b, pts_in_ptc)
+            pt3d_a, _ = closest_point(pt2d_a, pts_in_img[:, :2])
+            pt3d_b, _ = closest_point(pt2d_b, pts_in_img[:, :2])
             distance = np.linalg.norm(pt3d_a - pt3d_b)
             print(f'{distance}m between {pt3d_a} and {pt3d_b}')
 
