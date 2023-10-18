@@ -1,6 +1,8 @@
 import hjson
 import numpy as np
 import open3d
+import json
+from scipy.spatial.transform import Rotation as R
 
 
 def load_config_file(fpath: str):
@@ -31,3 +33,13 @@ def load_pcd(path: str, mode='open3d'):
         return pcd_data
     else:
         return None
+
+
+def load_camera_parameters(path: str):
+    with open(path, 'r') as f:
+        cam_params = json.load(f)
+    rot_mat = np.array(cam_params['extrinsics_R'])
+    translation = np.array(cam_params['extrinsics_t'])
+    fx, fy, cx, cy = cam_params['intrinsics']
+
+    return fx, fy, cx, cy, rot_mat, translation

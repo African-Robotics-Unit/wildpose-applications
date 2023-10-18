@@ -305,3 +305,7 @@ pyrightconfig.json
 *.webm
 
 # End of https://www.toptal.com/developers/gitignore/api/macos,linux,python,images,video
+
+*.pth
+*.pkl
+results/**
