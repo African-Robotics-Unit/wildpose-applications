@@ -23,9 +23,9 @@ def main():
     y_bars = []
     for data in dataset:
         distance = data['distance (m)']
-        gt = data['true length (m)']
+        gt = data['true lengths (m)']
         measurements = np.array(data['measured lengths (m)'])
-        xs.append(distance / gt)
+        xs.append(distance)
 
         points = np.abs(measurements - gt) / gt
         y_points.append(points)
@@ -43,7 +43,7 @@ def main():
             [x] * len(y_points[i]), y_points[i],
             facecolors='none', edgecolors='black')
 
-    plt.xlabel('Ratio of distance and target length') # Set appropriate label for x-axis
+    plt.xlabel('Distance (m)') # Set appropriate label for x-axis
     plt.ylabel('Absolute measurement error ratio') # Set appropriate label for y-axis
     # plt.xticks(range(len(xs)), np.round(xs))
 
