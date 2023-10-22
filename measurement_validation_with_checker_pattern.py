@@ -9,14 +9,14 @@ from utils.file_loader import load_pcd, load_camera_parameters
 from utils import camera as camera_utils
 
 
-ECAL_FOLDER = '/Volumes/Expansion/Calibration/ecal_meas/2023-02-04_16-37-41.815_wildpose_v1.1'
+ECAL_FOLDER = '/Volumes/Expansion/Calibration/ecal_meas/2023-02-04_16-18-06.097_wildpose_v1.1'
 CAMERA_PARAM_FILENAME = 'manual_calibration.json'
 FRAME_START_INDEX = 0
 FRAME_END_INDEX = 50
 PATTERN_SIZE = (7, 10)  # for example
 DEFAULT_CORNERS = [
-    [453, 369], [639, 366],
-    [454, 484],
+    [322, 293], [618, 288],
+    [323, 485],
 ]
 
 
