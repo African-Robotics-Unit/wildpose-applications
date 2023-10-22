@@ -27,7 +27,7 @@ def main():
         measurements = np.array(data['measured lengths (m)'])
         xs.append(distance)
 
-        points = np.abs(measurements - gt) / gt
+        points = np.abs(measurements - gt) / gt * 100.0
         y_points.append(points)
         y_bars.append(np.average(points))
 
@@ -44,7 +44,7 @@ def main():
             facecolors='none', edgecolors='black')
 
     plt.xlabel('Distance (m)') # Set appropriate label for x-axis
-    plt.ylabel('Absolute measurement error ratio') # Set appropriate label for y-axis
+    plt.ylabel('Absolute percentage error (%)') # Set appropriate label for y-axis
     # plt.xticks(range(len(xs)), np.round(xs))
 
 
