@@ -5,9 +5,12 @@ import pandas as pd
 import matplotlib.pyplot as plt
 from scipy.signal import lombscargle, butter, filtfilt, detrend
 from scipy.interpolate import interp1d
+import scienceplots
 
 from utils.file_loader import load_config_file
 
+
+plt.style.use(['science', 'nature', 'no-latex'])
 
 CONFIG = {
     "scene_dir": "data/lion_sleep3",
@@ -59,11 +62,11 @@ def main():
     y_filtered = filtfilt(b, a, uniform_ys)
 
     # show the original plot
-    plt.subplot(3, 1, 1)
-    plt.plot(timestamps, ys)
-    # plt.title('Original Plot')
-    plt.xlabel('Time')
-    plt.ylabel('Amplitude')
+    # plt.subplot(3, 1, 1)
+    # plt.plot(timestamps, ys)
+    # # plt.title('Original Plot')
+    # plt.xlabel('Time')
+    # plt.ylabel('Amplitude')
 
     # show the filtered plot
     plt.subplot(3, 1, 2)
@@ -91,7 +94,7 @@ def main():
             ta = None
             tb = None
             color = None
-    plt.xlabel('Time')
+    plt.xlabel('Time (s)')
     plt.ylabel('Amplitude')
 
     # calculate the Lomb-Scargle periodogram
@@ -99,11 +102,11 @@ def main():
     pgram = lombscargle(np.array(timestamps), np.array(ys), f)
 
     # show the spectral plot
-    plt.subplot(3, 1, 3)
-    plt.plot(f, pgram)
-    plt.axvspan(lowcut, highcut, color='yellow', alpha=0.5, linewidth=0)
-    plt.xlabel('Frequency (Hz)')
-    plt.ylabel('Amplitude')
+    # plt.subplot(3, 1, 3)
+    # plt.plot(f, pgram)
+    # plt.axvspan(lowcut, highcut, color='yellow', alpha=0.5, linewidth=0)
+    # plt.xlabel('Frequency (Hz)')
+    # plt.ylabel('Amplitude')
 
     for fmt in ['svg', 'pdf']:
         plt.savefig(f"results/output.{fmt}", format=fmt, bbox_inches="tight")
