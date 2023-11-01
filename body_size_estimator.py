@@ -43,7 +43,7 @@ def plane2point_distance(plane, point):
     pt_vec = np.ones(4)
     pt_vec[:3] = point
     plane = np.array(plane)
-    return np.abs(plane @ pt_vec) / np.linalg.norm(pt_vec[:3])
+    return np.abs(plane @ pt_vec) #/ np.linalg.norm(pt_vec[:3])
 
 
 class PointCloudPainter:
@@ -314,11 +314,17 @@ class KeyEvent:
 
 def main():
     # args
-    config_fpath = 'config.hjson'
     pcd_mode = 'open3d'
 
     # load the config file
-    config = load_config_file(config_fpath)
+    config = {
+        'scene_dir': '/Users/ikuta/Documents/Projects/wildpose-self-calibrator/data/lion_sleep3',
+        'pcd_dir': '/Users/ikuta/Documents/Projects/wildpose-self-calibrator/data/lion_sleep3/lidar',
+        'sync_rgb_dir': '/Users/ikuta/Documents/Projects/wildpose-self-calibrator/data/lion_sleep3/sync_rgb',
+        'mask_dir': '/Users/ikuta/Documents/Projects/wildpose-self-calibrator/data/lion_sleep3/masks_lion2',
+        'imu_fpath': '/Users/ikuta/Documents/Projects/wildpose-self-calibrator/data/lion_sleep3/imu.json',
+        'bbox_info_fpath': '/Users/ikuta/Documents/Projects/wildpose-self-calibrator/data/lion_sleep3/train.json',
+    }
 
     # load data file paths
     pcd_fpaths = sorted(glob.glob(
