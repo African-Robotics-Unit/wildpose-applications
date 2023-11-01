@@ -5,7 +5,6 @@ import pandas as pd
 
 from scipy.optimize import curve_fit
 
-import matplotlib
 import matplotlib.pyplot as plt
 from matplotlib.pyplot import figure
 from matplotlib.ticker import StrMethodFormatter
