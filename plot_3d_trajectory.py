@@ -10,9 +10,10 @@ from matplotlib.pyplot import figure
 import scienceplots
 
 
-plt.style.use(['science', 'nature', 'no-latex'])
+# plt.style.use(['science', 'nature', 'no-latex'])
 # figure(figsize=(10, 6))
 plt.rcParams.update({
+    'legend.frameon': False,
     "pdf.fonttype": 42,
 })
 
@@ -220,10 +221,22 @@ def main():
             linewidth=3 if k=='06' or k=='07' else 1,
             label=k, color=norm_rgb
         )
+    for k, v in dfs.items():
+        if k=='06' or k=='07':
+            # define color
+            rgb = COLORS[colors_indices[int(k)]]['color']
+            norm_rgb = [x / 255. for x in rgb]
+            # plot
+            ax.plot(
+                v['x'], v['z'], time,
+                linewidth=3 if k=='06' or k=='07' else 1,
+                label=k, color=norm_rgb
+            )
     ax.legend()
     # ax.set_box_aspect([1.0, 1.0, 1.0])
-    # ax.set_xlim(0, 400)
-    # ax.set_ylim(0, 400)
+    ax.set_xticks(np.arange(-6, 5, 2), minor=False)
+    ax.set_yticks(np.arange(110, 170, 10), minor=False)
+    ax.set_zticks(np.arange(0, 30, 5), minor=False)
     ax.set_xlabel('x (m)')
     ax.set_ylabel('z (m)')
     ax.set_zlabel('Time (s)')
