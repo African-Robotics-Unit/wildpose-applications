@@ -2,22 +2,37 @@ import os
 import numpy as np
 import hjson
 import pandas as pd
-import matplotlib.pyplot as plt
-from matplotlib.ticker import StrMethodFormatter
 
+from scipy.optimize import curve_fit
+
+import matplotlib
+import matplotlib.pyplot as plt
+from matplotlib.pyplot import figure
+from matplotlib.ticker import StrMethodFormatter
+import scienceplots
+
+
+plt.style.use(['science', 'nature', 'no-latex'])
+figure(figsize=(10, 6))
+plt.rcParams.update({
+    "pdf.fonttype": 42,
+})
 
 CONFIG = {
     "data_fpath": "data/calibration/validation_data.hjson",
     "result_dir": "results",
 }
 
+def polynomial(x, a, b, c):
+    return a * x**2 + b * x + c
+
 
 def main():
-    # load the data
+    # Load the data
     with open(CONFIG['data_fpath'], 'r') as f:
         dataset = hjson.loads(f.read())
 
-    # make the values for plot
+    # Prepare the values for plot
     xs = []
     y_points = []
     y_bars = []
@@ -31,26 +46,38 @@ def main():
         y_points.append(points)
         y_bars.append(np.average(points))
 
-    # Plotting
-    # bars = plt.bar(range(len(xs)), y_bars, alpha=0.7)
-    # for i, bar in enumerate(bars):
-    #     yerr = y_points[i]
-    #     plt.scatter(
-    #         [bar.get_x() + bar.get_width() / 2] * len(yerr), yerr,
-    #         facecolors='none', edgecolors='black')
-    for i, x in enumerate(xs):
-        plt.scatter(
-            [x] * len(y_points[i]), y_points[i],
-            facecolors='none', edgecolors='black')
+    # calculate the error bars
+    unique_xs = np.unique(xs)
+    y_means = []
+    y_stds = []
+    for x in unique_xs:
+        indices = np.argwhere(x == np.array(xs)).flatten()
+        data = np.array(y_points)[indices].flatten()
+        y_means.append(np.mean(data))
+        y_stds.append(np.std(data))
 
-    plt.xlabel('Distance (m)') # Set appropriate label for x-axis
-    plt.ylabel('Absolute percentage error (%)') # Set appropriate label for y-axis
-    # plt.xticks(range(len(xs)), np.round(xs))
+    # Perform curve fitting
+    popt, _ = curve_fit(polynomial, unique_xs, y_means)
+    # Generate x values for the fit curve
+    x_fit = np.linspace(min(unique_xs), max(unique_xs), 500)
+    # Generate y values based on the fit
+    y_fit = polynomial(x_fit, *popt)
 
+    # Plotting with error bars
+    plt.errorbar(
+        unique_xs, y_means, yerr=y_stds,
+        fmt='o', markersize=5, capsize=5,
+        label='Mean ± 1SD'
+    )
+    plt.plot(x_fit, y_fit, 'r--', label='Fit Curve')
+
+    plt.xlabel('Distance (m)')  # Label for x-axis
+    plt.ylabel('Absolute percentage error (%)')  # Label for y-axis
+    plt.legend()
 
     for fmt in ['svg', 'pdf']:
         plt.savefig(
-            os.path.join(CONFIG['result_dir'], f"validation_plot.{fmt}"),
+            os.path.join(CONFIG['result_dir'], f"validation_plot_with_error_bars.{fmt}"),
             format=fmt, bbox_inches="tight"
         )
     plt.show()
