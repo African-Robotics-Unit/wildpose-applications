@@ -219,7 +219,7 @@ def main():
         ax.plot(
             v['x'], v['z'], time,
             linewidth=3 if k=='06' or k=='07' else 1,
-            label=k, color=norm_rgb
+            label=int(k), color=norm_rgb
         )
     for k, v in dfs.items():
         if k=='06' or k=='07':
