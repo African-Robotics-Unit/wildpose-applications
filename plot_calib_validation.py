@@ -12,10 +12,10 @@ import scienceplots
 
 
 plt.style.use(['science', 'nature', 'no-latex'])
-figure(figsize=(10, 6))
 plt.rcParams.update({
     "pdf.fonttype": 42,
 })
+figure(figsize=(3.3, 2.5))
 
 CONFIG = {
     "data_fpath": "data/calibration/validation_data.hjson",
@@ -41,7 +41,7 @@ def main():
         measurements = np.array(data['measured lengths (m)'])
         xs.append(distance)
 
-        points = np.abs(measurements - gt) / gt * 100.0
+        points = np.abs(measurements - gt) * 1e3
         y_points.append(points)
         y_bars.append(np.average(points))
 
@@ -71,8 +71,8 @@ def main():
     plt.plot(x_fit, y_fit, 'r--', label='Fit Curve')
 
     plt.xlabel('Distance (m)')  # Label for x-axis
-    plt.ylabel('Absolute percentage error (%)')  # Label for y-axis
-    plt.legend()
+    plt.ylabel('Absolute error (mm)')  # Label for y-axis
+    # plt.legend()
 
     for fmt in ['svg', 'pdf']:
         plt.savefig(
