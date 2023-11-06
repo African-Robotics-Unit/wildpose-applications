@@ -15,6 +15,7 @@ CONFIG = {
     "scene_dir": "data/giraffe_stand",
     "pcd_dir": "data/giraffe_stand/lidar",
     "sync_rgb_dir": "data/giraffe_stand/sync_rgb",
+    'texture_img_fpath': 'data/giraffe_stand/texture.jpeg',
     "textured_pcd_dir": "data/giraffe_stand/textured_pcds",
 }
 IMG_WIDTH, IMG_HEIGHT = 1280, 720
@@ -271,11 +272,18 @@ def get_2D_gt(gt_json_path):
     return img_dict
 
 
-def main():
+def load_rgb_img(fpath: str):
+    bgr_img = cv2.imread(fpath)
+    rgb_img = cv2.cvtColor(bgr_img, cv2.COLOR_BGR2RGB)
+    return rgb_img
+
+
+def main(accumulation=False):
     # arguments
     data_dir = CONFIG['scene_dir']
     lidar_dir = CONFIG['pcd_dir']
     rgb_dir = CONFIG['sync_rgb_dir']
+    texture_img_fpath = CONFIG['texture_img_fpath']
     calib_fpath = os.path.join(data_dir, 'manual_calibration.json')
     output_dir = CONFIG['textured_pcd_dir']
 
@@ -285,37 +293,41 @@ def main():
     lidar_list, rgb_list = sync_lidar_and_rgb(lidar_dir, rgb_dir)
     fx, fy, cx, cy, rot_mat, translation = load_camera_parameters(calib_fpath)
 
-    for idx in tqdm(range(len(rgb_list))):
-        # load the frame image
-        rgb_path = rgb_list[idx]
-        key = os.path.basename(rgb_path)
-        bgr_img = cv2.imread(rgb_path)
-        rgb_img = cv2.cvtColor(bgr_img, cv2.COLOR_BGR2RGB)
-        # load point cloud of the frame
-        lidar_path = lidar_list[idx]
-        pcd_in_lidar = o3d.io.read_point_cloud(lidar_path)
-        pcd_in_lidar = np.asarray(pcd_in_lidar.points)
+    if accumulation:
+        # load the texture image
+        rgb_img = load_rgb_img(texture_img_fpath)
+
+        # accumulate all the point cloud
+        accumulated_pcd_in_lidar = None
+        for pcd_fpath in lidar_list:
+            pcd_in_lidar = o3d.io.read_point_cloud(pcd_fpath)
+            pcd_points = np.asarray(pcd_in_lidar.points)  # [N, 3]
+
+            if accumulated_pcd_in_lidar is None:
+                accumulated_pcd_in_lidar = pcd_points
+            else:
+                accumulated_pcd_in_lidar = np.vstack((accumulated_pcd_in_lidar, pcd_points))
+
 
         # load the camera parameters
         intrinsic = make_intrinsic(fx, fy, cx, cy)
         extrinsic = make_extrinsic(rot_mat, translation)
 
         # project the point cloud to camera and its image sensor
-        pcd_in_cam = lidar2cam_projection(pcd_in_lidar, extrinsic)
+        pcd_in_cam = lidar2cam_projection(accumulated_pcd_in_lidar, extrinsic)
         pcd_in_img = cam2image_projection(pcd_in_cam, intrinsic)
-
         pcd_in_cam = pcd_in_cam.T[:, :-1]
         pcd_in_img = pcd_in_img.T[:, :-1]
 
         pcd_colors, valid_mask_save = extract_rgb_from_image_pure(
             pcd_in_img, rgb_img, width=IMG_WIDTH, height=IMG_HEIGHT)
-        pcd_with_rgb_save = np.concatenate([pcd_in_cam, pcd_colors], 1)
-        pcd_with_rgb_save = pcd_with_rgb_save[valid_mask_save]  # [N, 6]
+        pcd_with_rgb = np.concatenate([pcd_in_cam, pcd_colors], 1)
+        pcd_with_rgb = pcd_with_rgb[valid_mask_save]  # [N, 6]
         textured_pcd = o3d.geometry.PointCloud()
         textured_pcd.points = o3d.utility.Vector3dVector(
-            pcd_with_rgb_save[:, :3])
+            pcd_with_rgb[:, :3])
         textured_pcd.colors = o3d.utility.Vector3dVector(
-            pcd_with_rgb_save[:, 3:])
+            pcd_with_rgb[:, 3:])
 
         # visualize
         vis = o3d.visualization.VisualizerWithKeyCallback()
@@ -328,12 +340,45 @@ def main():
         vis.run()
         vis.destroy_window()
 
-        file_prefix = rgb_path.split('/')[-1].split('.')[0]
         o3d.io.write_point_cloud(
-            os.path.join(output_dir, file_prefix + '.pcd'),
+            os.path.join(output_dir, 'coloured_accumulation.pcd'),
             textured_pcd)
-        break
+    else:
+        for idx in tqdm(range(len(rgb_list))):
+            # load the frame image
+            rgb_fpath = rgb_list[idx]
+            rgb_img = load_rgb_img(rgb_fpath)
+            # load point cloud of the frame
+            lidar_path = lidar_list[idx]
+            pcd_in_lidar = o3d.io.read_point_cloud(lidar_path)
+            pcd_in_lidar = np.asarray(pcd_in_lidar.points)
+
+            # load the camera parameters
+            intrinsic = make_intrinsic(fx, fy, cx, cy)
+            extrinsic = make_extrinsic(rot_mat, translation)
+
+            # project the point cloud to camera and its image sensor
+            pcd_in_cam = lidar2cam_projection(pcd_in_lidar, extrinsic)
+            pcd_in_img = cam2image_projection(pcd_in_cam, intrinsic)
+
+            pcd_in_cam = pcd_in_cam.T[:, :-1]
+            pcd_in_img = pcd_in_img.T[:, :-1]
+
+            pcd_colors, valid_mask_save = extract_rgb_from_image_pure(
+                pcd_in_img, rgb_img, width=IMG_WIDTH, height=IMG_HEIGHT)
+            pcd_with_rgb_save = np.concatenate([pcd_in_cam, pcd_colors], 1)
+            pcd_with_rgb_save = pcd_with_rgb_save[valid_mask_save]  # [N, 6]
+            textured_pcd = o3d.geometry.PointCloud()
+            textured_pcd.points = o3d.utility.Vector3dVector(
+                pcd_with_rgb_save[:, :3])
+            textured_pcd.colors = o3d.utility.Vector3dVector(
+                pcd_with_rgb_save[:, 3:])
+
+            file_prefix = rgb_fpath.split('/')[-1].split('.')[0]
+            o3d.io.write_point_cloud(
+                os.path.join(output_dir, file_prefix + '.pcd'),
+                textured_pcd)
 
 
 if __name__ == '__main__':
-    main()
+    main(accumulation=True)
