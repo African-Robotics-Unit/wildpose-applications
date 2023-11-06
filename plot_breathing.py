@@ -2,12 +2,22 @@ import os
 import numpy as np
 import pickle
 import pandas as pd
-import matplotlib.pyplot as plt
 from scipy.signal import lombscargle, butter, filtfilt, detrend
 from scipy.interpolate import interp1d
 
+import matplotlib.pyplot as plt
+from matplotlib.pyplot import figure
+import scienceplots
+
 from utils.file_loader import load_config_file
 
+
+plt.style.use(['science', 'nature', 'no-latex'])
+figure(figsize=(10, 6))
+plt.rcParams.update({
+    "pdf.fonttype": 42,
+})
+figure(figsize=(3.5 * 2, 2.5))   # max width is 3.5 for single column
 
 CONFIG = {
     "scene_dir": "data/lion_sleep3",
@@ -18,6 +28,12 @@ CONFIG = {
     "bbox_info_fpath": "data/lion_sleep3/train.json",
     "imu_fpath": "data/lion_sleep3/imu.json",
 }
+
+
+def normalize_data(data, new_min=-1, new_max=1):
+    min_val = np.min(data)
+    max_val = np.max(data)
+    return ((data - min_val) / (max_val - min_val)) * (new_max - new_min) + new_min
 
 
 def main():
@@ -59,15 +75,16 @@ def main():
     y_filtered = filtfilt(b, a, uniform_ys)
 
     # show the original plot
-    plt.subplot(3, 1, 1)
-    plt.plot(timestamps, ys)
-    # plt.title('Original Plot')
-    plt.xlabel('Time')
-    plt.ylabel('Amplitude')
+    # plt.subplot(3, 1, 1)
+    # plt.plot(timestamps, ys)
+    # # plt.title('Original Plot')
+    # plt.xlabel('Time')
+    # plt.ylabel('Amplitude')
 
     # show the filtered plot
-    plt.subplot(3, 1, 2)
-    plt.plot(uniform_timestamps, y_filtered)
+    normalized_y_filtered = normalize_data(np.array(y_filtered))
+    # plt.subplot(3, 1, 2)
+    plt.plot(uniform_timestamps, normalized_y_filtered)
     ta = None
     tb = None
     color = None
@@ -91,7 +108,7 @@ def main():
             ta = None
             tb = None
             color = None
-    plt.xlabel('Time')
+    plt.xlabel('Time (s)')
     plt.ylabel('Amplitude')
 
     # calculate the Lomb-Scargle periodogram
@@ -99,11 +116,11 @@ def main():
     pgram = lombscargle(np.array(timestamps), np.array(ys), f)
 
     # show the spectral plot
-    plt.subplot(3, 1, 3)
-    plt.plot(f, pgram)
-    plt.axvspan(lowcut, highcut, color='yellow', alpha=0.5, linewidth=0)
-    plt.xlabel('Frequency (Hz)')
-    plt.ylabel('Amplitude')
+    # plt.subplot(3, 1, 3)
+    # plt.plot(f, pgram)
+    # plt.axvspan(lowcut, highcut, color='yellow', alpha=0.5, linewidth=0)
+    # plt.xlabel('Frequency (Hz)')
+    # plt.ylabel('Amplitude')
 
     for fmt in ['svg', 'pdf']:
         plt.savefig(f"results/output.{fmt}", format=fmt, bbox_inches="tight")

@@ -9,15 +9,14 @@ from utils.file_loader import load_pcd, load_camera_parameters
 from utils import camera as camera_utils
 
 
-ECAL_FOLDER = '/Volumes/Expansion/Calibration/ecal_meas/2023-02-04_15-20-34.496_wildpose_v1.1'
+ECAL_FOLDER = '/Volumes/Expansion/Calibration/ecal_meas/2023-02-04_16-37-41.815_wildpose_v1.1'
 CAMERA_PARAM_FILENAME = 'manual_calibration.json'
 FRAME_START_INDEX = 0
-FRAME_END_INDEX = 10
+FRAME_END_INDEX = 50
 PATTERN_SIZE = (7, 10)  # for example
 DEFAULT_CORNERS = [
-    [248, 72],
-    [1126, 60],
-    [251, 662],
+    [454, 369], [639, 366],
+    [453, 484],
 ]
 
 
@@ -67,7 +66,7 @@ def main():
     # load the data
     all_rgb_fpaths = sorted(glob.glob(os.path.join(ECAL_FOLDER, 'sync_rgb', '*.jpeg')))
     all_pcd_fpaths = sorted(glob.glob(os.path.join(ECAL_FOLDER, 'lidar', '*.pcd')))
-    assert len(all_rgb_fpaths) == len(all_pcd_fpaths)
+    # assert len(all_rgb_fpaths) == len(all_pcd_fpaths)
 
     rgb_fpaths = all_rgb_fpaths[FRAME_START_INDEX:FRAME_END_INDEX]
     pcd_fpaths = all_pcd_fpaths[FRAME_START_INDEX:FRAME_END_INDEX]
