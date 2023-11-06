@@ -17,6 +17,7 @@ figure(figsize=(10, 6))
 plt.rcParams.update({
     "pdf.fonttype": 42,
 })
+figure(figsize=(3.5 * 2, 2.5))   # max width is 3.5 for single column
 
 CONFIG = {
     "scene_dir": "data/lion_sleep3",
@@ -82,7 +83,7 @@ def main():
 
     # show the filtered plot
     normalized_y_filtered = normalize_data(np.array(y_filtered))
-    plt.subplot(3, 1, 2)
+    # plt.subplot(3, 1, 2)
     plt.plot(uniform_timestamps, normalized_y_filtered)
     ta = None
     tb = None
