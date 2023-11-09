@@ -12,11 +12,11 @@ from projection_functions import extract_rgb_from_image_pure
 
 
 CONFIG = {
-    "scene_dir": "data/giraffe_stand",
-    "pcd_dir": "data/giraffe_stand/lidar",
-    "sync_rgb_dir": "data/giraffe_stand/sync_rgb",
-    'texture_img_fpath': 'data/giraffe_stand/texture.jpeg',
-    "textured_pcd_dir": "data/giraffe_stand/textured_pcds",
+    "scene_dir": "data/jackal_stand",
+    "pcd_dir": "data/jackal_stand/lidar",
+    "sync_rgb_dir": "data/jackal_stand/sync_rgb",
+    'texture_img_fpath': 'data/jackal_stand/texture.jpeg',
+    "textured_pcd_dir": "data/jackal_stand/textured_pcds",
 }
 IMG_WIDTH, IMG_HEIGHT = 1280, 720
 
