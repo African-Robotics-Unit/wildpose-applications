@@ -287,9 +287,6 @@ def main(accumulation=False):
     calib_fpath = os.path.join(data_dir, 'manual_calibration.json')
     output_dir = CONFIG['textured_pcd_dir']
 
-    with open(calib_fpath, 'r') as f:
-        cam_params = json.load(f)
-
     lidar_list, rgb_list = sync_lidar_and_rgb(lidar_dir, rgb_dir)
     fx, fy, cx, cy, rot_mat, translation = load_camera_parameters(calib_fpath)
 

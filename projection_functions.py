@@ -1,4 +1,5 @@
 import numpy as np
+from numpy import linalg as LA
 
 
 COLORS = [
@@ -214,6 +215,13 @@ def extract_rgb_from_image_pure(pcd_in_img, rgb_img, width, height):
                                         pixel_locs[:, 1]] / 255.0
 
     return pcd_colors, valid_mask
+
+
+def get_3d_from_2d_point(pcd_in_img, point_2d):
+    point_2d = np.array(point_2d)
+    distances = LA.norm(pcd_in_img[:, :2] - point_2d, axis=1)
+    pt_idx = np.argmin(distances)
+    return pcd_in_img[pt_idx, :], pt_idx
 
 
 def get_coloured_point_cloud(
