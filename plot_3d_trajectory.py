@@ -9,6 +9,8 @@ import matplotlib.pyplot as plt
 from matplotlib.pyplot import figure
 import scienceplots
 
+from utils.file_loader import load_camera_parameters
+
 
 # plt.style.use(['science', 'nature', 'no-latex'])
 # figure(figsize=(10, 6))
@@ -183,6 +185,7 @@ def median_filter_3d_positions(dfs, filter_size=3):
 
 def main():
     data_dir = '/Users/ikuta/Documents/Projects/wildpose-applications/data/springbok_herd2/trajectory_raw'
+    calib_fpath = os.path.join(data_dir, 'manual_calibration.json')
 
     # load data
     all_csv_fpaths = sorted(glob.glob(os.path.join(data_dir, '*.csv')))
@@ -190,7 +193,13 @@ def main():
         f for f in all_csv_fpaths
         if re.fullmatch(r'\d+\.csv', os.path.basename(f))
     ]
+    fx, fy, cx, cy, rot_mat, translation = load_camera_parameters(calib_fpath)
+    intrinsic = make_intrinsic(fx, fy, cx, cy)
+    extrinsic = make_extrinsic(rot_mat, translation)
 
+    # collect the 3D positions with Segment Anything Model
+
+    # filter the positions
     dfs = {}
     for csv_fpath in csv_fpaths:
         key = os.path.splitext(os.path.basename(csv_fpath))[0]
