@@ -12,11 +12,11 @@ from projection_functions import extract_rgb_from_image_pure
 
 
 CONFIG = {
-    "scene_dir": "data/jackal_stand",
-    "pcd_dir": "data/jackal_stand/lidar",
-    "sync_rgb_dir": "data/jackal_stand/sync_rgb",
-    'texture_img_fpath': 'data/jackal_stand/texture.jpeg',
-    "textured_pcd_dir": "data/jackal_stand/textured_pcds",
+    "scene_dir": "data/giraffe_stand",
+    "pcd_dir": "data/giraffe_stand/lidar",
+    "sync_rgb_dir": "data/giraffe_stand/sync_rgb",
+    'texture_img_fpath': 'data/giraffe_stand/texture.jpeg',
+    "textured_pcd_dir": "data/giraffe_stand/textured_pcds",
 }
 IMG_WIDTH, IMG_HEIGHT = 1280, 720
 
@@ -287,11 +287,11 @@ def main(accumulation=False):
     calib_fpath = os.path.join(data_dir, 'manual_calibration.json')
     output_dir = CONFIG['textured_pcd_dir']
 
-    lidar_list, rgb_list = sync_lidar_and_rgb(lidar_dir, rgb_dir)
     fx, fy, cx, cy, rot_mat, translation = load_camera_parameters(calib_fpath)
 
     if accumulation:
         # load the texture image
+        lidar_list = sorted(glob.glob(os.path.join(lidar_dir, '*.pcd')))
         rgb_img = load_rgb_img(texture_img_fpath)
 
         # accumulate all the point cloud
@@ -341,6 +341,7 @@ def main(accumulation=False):
             os.path.join(output_dir, 'coloured_accumulation.pcd'),
             textured_pcd)
     else:
+        lidar_list, rgb_list = sync_lidar_and_rgb(lidar_dir, rgb_dir)
         for idx in tqdm(range(len(rgb_list))):
             # load the frame image
             rgb_fpath = rgb_list[idx]
