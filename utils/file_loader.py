@@ -2,6 +2,7 @@ import hjson
 import numpy as np
 import open3d
 import json
+import cv2
 from scipy.spatial.transform import Rotation as R
 
 
@@ -33,6 +34,12 @@ def load_pcd(path: str, mode='open3d'):
         return pcd_data
     else:
         return None
+
+
+def load_rgb_img(fpath: str):
+    bgr_img = cv2.imread(fpath)
+    rgb_img = cv2.cvtColor(bgr_img, cv2.COLOR_BGR2RGB)
+    return rgb_img
 
 
 def load_camera_parameters(path: str):

@@ -158,7 +158,7 @@ colors_indices = [0, 5, 10, 15, 20, 25, 30, 35, 13, 45, 50, 55, 60, 65, 70]
 
 
 def extract_rgb_from_image(
-    pcd_in_img, pcd_in_cam, rgb_img, seg_mask, obj_id, width, height
+    pcd_in_img, pcd_in_cam, rgb_img, seg_mask, obj_dict, width, height
 ):
 
     valid_mask = \
@@ -182,6 +182,7 @@ def extract_rgb_from_image(
 
     obj_points = []
     for obj_idx in range(len(seg_mask)):
+        _, obj_id = obj_dict[obj_idx]
         obj_mask = seg_mask[obj_idx, 0]
         valid_locs_mask = np.where(
             obj_mask[pixel_locs[:, 0], pixel_locs[:, 1]])

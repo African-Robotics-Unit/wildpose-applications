@@ -3,13 +3,18 @@ import re
 import glob
 import pandas as pd
 import numpy as np
+import json
+from tqdm import tqdm
 import scipy.ndimage
 
 import matplotlib.pyplot as plt
 from matplotlib.pyplot import figure
 import scienceplots
 
-from utils.file_loader import load_camera_parameters
+from utils.file_loader import load_camera_parameters, load_rgb_img, load_pcd
+from utils.camera import make_intrinsic_mat, make_extrinsic_mat
+from utils.projection import lidar2cam_projection, cam2image_projection
+from projection_functions import extract_rgb_from_image
 
 
 # plt.style.use(['science', 'nature', 'no-latex'])
@@ -155,8 +160,8 @@ COLORS = [
     {"color": [102, 102, 156], "isthing": 0, "id": 199, "name": "wall-other-merged"},
     {"color": [250, 141, 255], "isthing": 0, "id": 200, "name": "rug-merged"},
 ]
-
 colors_indices = [0,5,10,15,20,25,30,35,13,45,50,55,60,65,70,3,7,11,13,18,19,33,34,37,39]
+IMG_WIDTH, IMG_HEIGHT = 1280,720
 
 
 def get_timestamp_from_pcd_fpath(fpath: str) -> float:
@@ -183,21 +188,69 @@ def median_filter_3d_positions(dfs, filter_size=3):
     return filtered_dfs
 
 
+def get_2D_gt(gt_json_path):
+    gt_json = json.load(open(gt_json_path, 'r'))
+    img_dict = {}
+
+    annotations = gt_json['annotations']
+    images = gt_json['images']
+
+    for idx in range(len(annotations)):
+        anno = annotations[idx]
+        bbox = anno['bbox']
+        img_id = anno['image_id']
+        obj_id = anno['category_id']
+        img_filename = images[img_id]['file_name'].split('/')[-1]
+
+        if img_filename not in img_dict:
+            img_dict[img_filename] = []
+        img_dict[img_filename].append([bbox,obj_id])
+    return img_dict
+
+
 def main():
-    data_dir = '/Users/ikuta/Documents/Projects/wildpose-applications/data/springbok_herd2/trajectory_raw'
+    data_dir = '/Users/ikuta/Documents/Projects/wildpose-applications/data/springbok_herd2/'
+    lidar_dir = os.path.join(data_dir, 'lidar')
+    rgb_dir = os.path.join(data_dir, 'sync_rgb')
+    mask_dir = os.path.join(data_dir, 'mask2')
+    img_dict = get_2D_gt(os.path.join(data_dir, 'labeling2/train.json'))
     calib_fpath = os.path.join(data_dir, 'manual_calibration.json')
 
     # load data
-    all_csv_fpaths = sorted(glob.glob(os.path.join(data_dir, '*.csv')))
-    csv_fpaths = [
-        f for f in all_csv_fpaths
-        if re.fullmatch(r'\d+\.csv', os.path.basename(f))
-    ]
+    img_fpaths = sorted(glob.glob(os.path.join(rgb_dir, '*.jpeg')))
+    pcd_fpaths = sorted(glob.glob(os.path.join(lidar_dir, '*.pcd')))
+    assert len(img_fpaths) == len(pcd_fpaths)
+    n_frame = len(img_fpaths)
+    mask_fpaths = [os.path.join(mask_dir, '{0}.npy'.format(i)) for i in range(n_frame)]
+    key = os.path.basename(img_fpath).replace('.jpeg', '_3.jpeg')
     fx, fy, cx, cy, rot_mat, translation = load_camera_parameters(calib_fpath)
-    intrinsic = make_intrinsic(fx, fy, cx, cy)
-    extrinsic = make_extrinsic(rot_mat, translation)
+    intrinsic = make_intrinsic_mat(fx, fy, cx, cy)
+    extrinsic = make_extrinsic_mat(rot_mat, translation)
 
     # collect the 3D positions with Segment Anything Model
+    for img_fpath, pcd_fpath, mask_fpath in tqdm(zip(img_fpaths, pcd_fpaths, mask_fpaths)):
+        # load the frame
+        rgb_img = load_rgb_img(img_fpath)
+        pcd_open3d = load_pcd(pcd_fpath, mode='open3d')
+        pcd_in_lidar = np.asarray(pcd_open3d.points)
+        seg_mask = np.load(mask_fpath)
+
+        # reprojection
+        pcd_in_cam = lidar2cam_projection(pcd_in_lidar, extrinsic)
+        pcd_in_img = cam2image_projection(pcd_in_cam, intrinsic)
+        pcd_in_cam = pcd_in_cam.T[:, :-1]
+        pcd_in_img = pcd_in_img.T[:, :-1]
+
+        obj_pos_colors = []
+
+        colors, valid_mask, obj_points = extract_rgb_from_image(
+            pcd_in_img, pcd_in_cam, rgb_img, seg_mask, img_dict[key],
+            width=IMG_WIDTH, height=IMG_HEIGHT
+        )
+
+        pcd_with_rgb = np.concatenate([pcd_in_cam, colors], axis=1)
+        # pcd_with_rgb = pcd_with_rgb[valid_mask]
+
 
     # filter the positions
     dfs = {}
