@@ -9,6 +9,7 @@ from tqdm import tqdm
 
 from utils.file_loader import load_camera_parameters
 from projection_functions import extract_rgb_from_image_pure
+from utils.camera import make_intrinsic_mat, make_extrinsic_mat
 
 
 CONFIG = {
@@ -175,27 +176,6 @@ COLORS = [
 colors_indice = [0, 5, 10, 15, 20, 25, 30, 35, 13, 45, 50, 55, 60, 65, 70]
 
 
-def make_intrinsic(fx, fy, cx, cy):
-
-    intrinsic_mat = np.eye(4)
-    intrinsic_mat[0, 0] = fx
-    intrinsic_mat[0, 2] = cx
-    intrinsic_mat[1, 1] = fy
-    intrinsic_mat[1, 2] = cy
-
-    return intrinsic_mat
-
-
-def make_extrinsic(rot_mat, translation):
-
-    extrinsic_mat = np.eye(4)
-    extrinsic_mat[:3, :3] = rot_mat
-    extrinsic_mat[:-1, -1] = translation
-    extrinsic_mat[-1, -1] = 1
-
-    return extrinsic_mat
-
-
 def lidar2cam_projection(pcd, extrinsic):
     tmp = np.insert(pcd, 3, 1, axis=1).T
     tmp = np.delete(tmp, np.where(tmp[0, :] < 0), axis=1)
@@ -307,8 +287,8 @@ def main(accumulation=False):
 
 
         # load the camera parameters
-        intrinsic = make_intrinsic(fx, fy, cx, cy)
-        extrinsic = make_extrinsic(rot_mat, translation)
+        intrinsic = make_intrinsic_mat(fx, fy, cx, cy)
+        extrinsic = make_extrinsic_mat(rot_mat, translation)
 
         # project the point cloud to camera and its image sensor
         pcd_in_cam = lidar2cam_projection(accumulated_pcd_in_lidar, extrinsic)
