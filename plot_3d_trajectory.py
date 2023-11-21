@@ -14,6 +14,7 @@ import scienceplots
 from utils.file_loader import load_camera_parameters, load_rgb_img, load_pcd
 from utils.camera import make_intrinsic_mat, make_extrinsic_mat
 from utils.projection import lidar2cam_projection, cam2image_projection
+from utils.format_conversion import get_timestamp_from_img_fpath
 from projection_functions import extract_rgb_from_image
 
 
@@ -212,7 +213,7 @@ def main():
     data_dir = '/Users/ikuta/Documents/Projects/wildpose-applications/data/springbok_herd2/'
     lidar_dir = os.path.join(data_dir, 'lidar')
     rgb_dir = os.path.join(data_dir, 'sync_rgb')
-    mask_dir = os.path.join(data_dir, 'mask2')
+    mask_dir = os.path.join(data_dir, 'masks2')
     img_dict = get_2D_gt(os.path.join(data_dir, 'labeling2/train.json'))
     calib_fpath = os.path.join(data_dir, 'manual_calibration.json')
 
@@ -222,18 +223,20 @@ def main():
     assert len(img_fpaths) == len(pcd_fpaths)
     n_frame = len(img_fpaths)
     mask_fpaths = [os.path.join(mask_dir, '{0}.npy'.format(i)) for i in range(n_frame)]
-    key = os.path.basename(img_fpath).replace('.jpeg', '_3.jpeg')
     fx, fy, cx, cy, rot_mat, translation = load_camera_parameters(calib_fpath)
     intrinsic = make_intrinsic_mat(fx, fy, cx, cy)
     extrinsic = make_extrinsic_mat(rot_mat, translation)
 
     # collect the 3D positions with Segment Anything Model
+    positions_3d = {}
     for img_fpath, pcd_fpath, mask_fpath in tqdm(zip(img_fpaths, pcd_fpaths, mask_fpaths)):
         # load the frame
         rgb_img = load_rgb_img(img_fpath)
         pcd_open3d = load_pcd(pcd_fpath, mode='open3d')
         pcd_in_lidar = np.asarray(pcd_open3d.points)
         seg_mask = np.load(mask_fpath)
+        timestamp = get_timestamp_from_img_fpath(img_fpath)
+        key = os.path.basename(img_fpath).replace('.jpeg', '_3.jpeg')
 
         # reprojection
         pcd_in_cam = lidar2cam_projection(pcd_in_lidar, extrinsic)
@@ -243,7 +246,7 @@ def main():
 
         obj_pos_colors = []
 
-        colors, valid_mask, obj_points = extract_rgb_from_image(
+        colors, valid_mask, obj_points, obj_mask_from_color = extract_rgb_from_image(
             pcd_in_img, pcd_in_cam, rgb_img, seg_mask, img_dict[key],
             width=IMG_WIDTH, height=IMG_HEIGHT
         )
@@ -251,25 +254,40 @@ def main():
         pcd_with_rgb = np.concatenate([pcd_in_cam, colors], axis=1)
         # pcd_with_rgb = pcd_with_rgb[valid_mask]
 
+        # store the position data
+        for id, points in obj_points.items():
+            # TODO: add timestamp
+            position_3d = np.mean(points, axis=0)
+            if id not in positions_3d.keys():
+                positions_3d[id] = []
+            positions_3d[id].append([timestamp] + position_3d.tolist())
 
-    # filter the positions
+    # array to dataframe
     dfs = {}
-    for csv_fpath in csv_fpaths:
-        key = os.path.splitext(os.path.basename(csv_fpath))[0]
-        df = pd.read_csv(
-            csv_fpath,
-            names=['time', 'x', 'y', 'z'], header=0
+    for key in positions_3d.keys():
+        dfs[key] = pd.DataFrame(
+            positions_3d[key],
+            columns =['time', 'x', 'y', 'z']
         )
-        df = df.where(df != -1e-6, other=np.nan)
-        dfs[key] = df
-    dfs = median_filter_3d_positions(dfs, filter_size=5)
 
-    # load timestamp
-    csv_fpath = os.path.join(data_dir, 'lidar_frames.csv')
-    df = pd.read_csv(csv_fpath, names=['file_name'], header=0, index_col=0)
-    timestamps = np.array(df['file_name'].apply(
-        get_timestamp_from_pcd_fpath).tolist())
-    time = timestamps - timestamps[0]
+    # # filter the positions
+    # dfs = {}
+    # for csv_fpath in csv_fpaths:
+    #     key = os.path.splitext(os.path.basename(csv_fpath))[0]
+    #     df = pd.read_csv(
+    #         csv_fpath,
+    #         names=['time', 'x', 'y', 'z'], header=0
+    #     )
+    #     df = df.where(df != -1e-6, other=np.nan)
+    #     dfs[key] = df
+    # dfs = median_filter_3d_positions(dfs, filter_size=5)
+
+    # # load timestamp
+    # csv_fpath = os.path.join(data_dir, 'lidar_frames.csv')
+    # df = pd.read_csv(csv_fpath, names=['file_name'], header=0, index_col=0)
+    # timestamps = np.array(df['file_name'].apply(
+    #     get_timestamp_from_pcd_fpath).tolist())
+    # time = timestamps - timestamps[0]
 
     # plot the data
     ax = plt.figure().add_subplot(projection='3d')

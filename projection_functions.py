@@ -175,28 +175,24 @@ def extract_rgb_from_image(
 
     pcd_in_img_valid = pcd_in_img[valid_locs]
 
-    colors = np.zeros((len(pcd_in_img_valid), 3))
+    pcd_colors = np.zeros((len(pcd_in_img), 3))
 
     obj_mask_from_color = np.zeros((len(pcd_in_img_valid)))
-    colors[:, :] = rgb_img[pixel_locs[:, 0], pixel_locs[:, 1]] / 255.0
+    pcd_colors[valid_mask, :] = rgb_img[pixel_locs[:, 0], pixel_locs[:, 1]] / 255.0
 
-    obj_points = []
+    obj_points = {}
     for obj_idx in range(len(seg_mask)):
         _, obj_id = obj_dict[obj_idx]
         obj_mask = seg_mask[obj_idx, 0]
         valid_locs_mask = np.where(
             obj_mask[pixel_locs[:, 0], pixel_locs[:, 1]])
 
+        obj_points[obj_id] = pcd_in_cam[valid_locs[valid_locs_mask]]
+
         # get color for the segmentation
-        color_RGB = COLORS[colors_indices[obj_id]]['color']
-        colors[valid_locs_mask, 0] = color_RGB[0] / 255.0
-        colors[valid_locs_mask, 1] = color_RGB[1] / 255.0
-        colors[valid_locs_mask, 2] = color_RGB[2] / 255.0
         obj_mask_from_color[valid_locs_mask] = obj_id
 
-        obj_points.append(pcd_in_cam[valid_locs_mask])
-
-    return colors, valid_mask, obj_points, obj_mask_from_color
+    return pcd_colors, valid_mask, obj_points, obj_mask_from_color
 
 
 def extract_rgb_from_image_pure(pcd_in_img, rgb_img, width, height):
