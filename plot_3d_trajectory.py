@@ -213,7 +213,6 @@ def main():
     lidar_dir = os.path.join(data_dir, 'lidar')
     rgb_dir = os.path.join(data_dir, 'sync_rgb')
     mask_dir = os.path.join(data_dir, 'masks2')
-    img_dict = get_2D_gt(os.path.join(data_dir, 'labeling2/train.json'))
     calib_fpath = os.path.join(data_dir, 'manual_calibration.json')
 
     # load data
