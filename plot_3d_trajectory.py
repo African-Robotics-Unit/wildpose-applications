@@ -196,12 +196,11 @@ def get_2D_gt(gt_json_path):
     annotations = gt_json['annotations']
     images = gt_json['images']
 
-    for idx in range(len(annotations)):
-        anno = annotations[idx]
+    for anno in annotations:
         bbox = anno['bbox']
         img_id = anno['image_id']
         obj_id = anno['category_id']
-        img_filename = images[img_id]['file_name'].split('/')[-1]
+        img_filename = os.path.basename(images[img_id]['file_name'])
 
         if img_filename not in img_dict:
             img_dict[img_filename] = []
@@ -223,20 +222,23 @@ def main():
     assert len(img_fpaths) == len(pcd_fpaths)
     n_frame = len(img_fpaths)
     mask_fpaths = [os.path.join(mask_dir, '{0}.npy'.format(i)) for i in range(n_frame)]
+    mask_id_fpaths = [os.path.join(mask_dir, '{0}_obj_ids.npy'.format(i)) for i in range(n_frame)]
     fx, fy, cx, cy, rot_mat, translation = load_camera_parameters(calib_fpath)
     intrinsic = make_intrinsic_mat(fx, fy, cx, cy)
     extrinsic = make_extrinsic_mat(rot_mat, translation)
 
     # collect the 3D positions with Segment Anything Model
+    timestamp0 = get_timestamp_from_img_fpath(img_fpaths[0])
     positions_3d = {}
-    for img_fpath, pcd_fpath, mask_fpath in tqdm(zip(img_fpaths, pcd_fpaths, mask_fpaths)):
+    for img_fpath, pcd_fpath, mask_fpath, mask_id_fpath in tqdm(zip(img_fpaths, pcd_fpaths, mask_fpaths, mask_id_fpaths)):
         # load the frame
         rgb_img = load_rgb_img(img_fpath)
         pcd_open3d = load_pcd(pcd_fpath, mode='open3d')
         pcd_in_lidar = np.asarray(pcd_open3d.points)
         seg_mask = np.load(mask_fpath)
+        obj_ids = np.load(mask_id_fpath)
         timestamp = get_timestamp_from_img_fpath(img_fpath)
-        key = os.path.basename(img_fpath).replace('.jpeg', '_3.jpeg')
+        img_key = os.path.basename(img_fpath).replace('.jpeg', '_3.jpeg')
 
         # reprojection
         pcd_in_cam = lidar2cam_projection(pcd_in_lidar, extrinsic)
@@ -247,7 +249,7 @@ def main():
         obj_pos_colors = []
 
         colors, valid_mask, obj_points, obj_mask_from_color = extract_rgb_from_image(
-            pcd_in_img, pcd_in_cam, rgb_img, seg_mask, img_dict[key],
+            pcd_in_img, pcd_in_cam, rgb_img, seg_mask, obj_ids,
             width=IMG_WIDTH, height=IMG_HEIGHT
         )
 
@@ -256,7 +258,6 @@ def main():
 
         # store the position data
         for id, points in obj_points.items():
-            # TODO: add timestamp
             position_3d = np.mean(points, axis=0)
             if id not in positions_3d.keys():
                 positions_3d[id] = []
@@ -297,21 +298,21 @@ def main():
         norm_rgb = [x / 255. for x in rgb]
         # plot
         ax.plot(
-            v['x'], v['z'], time,
-            linewidth=3 if k=='06' or k=='07' else 1,
+            v['x'], v['z'], v['time'] - timestamp0,
+            linewidth=1,
             label=int(k), color=norm_rgb
         )
-    for k, v in dfs.items():
-        if k=='06' or k=='07':
-            # define color
-            rgb = COLORS[colors_indices[int(k)]]['color']
-            norm_rgb = [x / 255. for x in rgb]
-            # plot
-            ax.plot(
-                v['x'], v['z'], time,
-                linewidth=3 if k=='06' or k=='07' else 1,
-                label=k, color=norm_rgb
-            )
+    # for k, v in dfs.items():
+    #     if k=='06' or k=='07':
+    #         # define color
+    #         rgb = COLORS[colors_indices[int(k)]]['color']
+    #         norm_rgb = [x / 255. for x in rgb]
+    #         # plot
+    #         ax.plot(
+    #             v['x'], v['z'], time,
+    #             linewidth=3 if k=='06' or k=='07' else 1,
+    #             label=k, color=norm_rgb
+    #         )
     ax.legend()
     # ax.set_box_aspect([1.0, 1.0, 1.0])
     ax.set_xticks(np.arange(-6, 5, 2), minor=False)
