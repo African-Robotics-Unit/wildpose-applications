@@ -28,7 +28,6 @@ CONFIG = {
     "scene_dir": "data/lion_walk",
     "pcd_dir": "data/lion_walk/lidar",
     "sync_rgb_dir": "data/lion_walk/sync_rgb",
-    'texture_img_fpath': 'data/lion_walk/texture.jpeg',
     "textured_pcd_dir": "data/lion_walk/textured_pcds",
 }
 IMG_WIDTH, IMG_HEIGHT = 1280, 720
@@ -153,7 +152,6 @@ def main():
     data_dir = CONFIG['scene_dir']
     lidar_dir = CONFIG['pcd_dir']
     rgb_dir = CONFIG['sync_rgb_dir']
-    texture_img_fpath = CONFIG['texture_img_fpath']
     calib_fpath = os.path.join(data_dir, 'manual_calibration.json')
     output_dir = CONFIG['textured_pcd_dir']
 
