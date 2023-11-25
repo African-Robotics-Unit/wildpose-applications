@@ -9,14 +9,15 @@ from tqdm import tqdm
 
 from utils.file_loader import load_camera_parameters
 from projection_functions import extract_rgb_from_image_pure
+from utils.camera import make_intrinsic_mat, make_extrinsic_mat
 
 
 CONFIG = {
-    "scene_dir": "data/jackal_stand",
-    "pcd_dir": "data/jackal_stand/lidar",
-    "sync_rgb_dir": "data/jackal_stand/sync_rgb",
-    'texture_img_fpath': 'data/jackal_stand/texture.jpeg',
-    "textured_pcd_dir": "data/jackal_stand/textured_pcds",
+    "scene_dir": "data/giraffe_stand",
+    "pcd_dir": "data/giraffe_stand/lidar",
+    "sync_rgb_dir": "data/giraffe_stand/sync_rgb",
+    'texture_img_fpath': 'data/giraffe_stand/texture.jpeg',
+    "textured_pcd_dir": "data/giraffe_stand/textured_pcds",
 }
 IMG_WIDTH, IMG_HEIGHT = 1280, 720
 
@@ -175,27 +176,6 @@ COLORS = [
 colors_indice = [0, 5, 10, 15, 20, 25, 30, 35, 13, 45, 50, 55, 60, 65, 70]
 
 
-def make_intrinsic(fx, fy, cx, cy):
-
-    intrinsic_mat = np.eye(4)
-    intrinsic_mat[0, 0] = fx
-    intrinsic_mat[0, 2] = cx
-    intrinsic_mat[1, 1] = fy
-    intrinsic_mat[1, 2] = cy
-
-    return intrinsic_mat
-
-
-def make_extrinsic(rot_mat, translation):
-
-    extrinsic_mat = np.eye(4)
-    extrinsic_mat[:3, :3] = rot_mat
-    extrinsic_mat[:-1, -1] = translation
-    extrinsic_mat[-1, -1] = 1
-
-    return extrinsic_mat
-
-
 def lidar2cam_projection(pcd, extrinsic):
     tmp = np.insert(pcd, 3, 1, axis=1).T
     tmp = np.delete(tmp, np.where(tmp[0, :] < 0), axis=1)
@@ -287,11 +267,11 @@ def main(accumulation=False):
     calib_fpath = os.path.join(data_dir, 'manual_calibration.json')
     output_dir = CONFIG['textured_pcd_dir']
 
-    lidar_list, rgb_list = sync_lidar_and_rgb(lidar_dir, rgb_dir)
     fx, fy, cx, cy, rot_mat, translation = load_camera_parameters(calib_fpath)
 
     if accumulation:
         # load the texture image
+        lidar_list = sorted(glob.glob(os.path.join(lidar_dir, '*.pcd')))
         rgb_img = load_rgb_img(texture_img_fpath)
 
         # accumulate all the point cloud
@@ -307,8 +287,8 @@ def main(accumulation=False):
 
 
         # load the camera parameters
-        intrinsic = make_intrinsic(fx, fy, cx, cy)
-        extrinsic = make_extrinsic(rot_mat, translation)
+        intrinsic = make_intrinsic_mat(fx, fy, cx, cy)
+        extrinsic = make_extrinsic_mat(rot_mat, translation)
 
         # project the point cloud to camera and its image sensor
         pcd_in_cam = lidar2cam_projection(accumulated_pcd_in_lidar, extrinsic)
@@ -341,6 +321,7 @@ def main(accumulation=False):
             os.path.join(output_dir, 'coloured_accumulation.pcd'),
             textured_pcd)
     else:
+        lidar_list, rgb_list = sync_lidar_and_rgb(lidar_dir, rgb_dir)
         for idx in tqdm(range(len(rgb_list))):
             # load the frame image
             rgb_fpath = rgb_list[idx]

@@ -68,7 +68,7 @@ def main():
         fmt='o', markersize=5, capsize=5,
         label='Mean ± 1SD'
     )
-    plt.plot(x_fit, y_fit, 'r--', label='Fit Curve')
+    # plt.plot(x_fit, y_fit, 'r--', label='Fit Curve')
 
     plt.xlabel('Distance (m)')  # Label for x-axis
     plt.ylabel('Absolute error (mm)')  # Label for y-axis
