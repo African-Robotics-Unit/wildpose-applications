@@ -80,6 +80,35 @@ def erode_mask(mask, kernel_size=(5,5), iterations=1):
     return eroded_mask
 
 
+def calculate_precision(positions_3d):
+    precision_results = {}
+    all_deviations = []
+
+    for id, positions in positions_3d.items():
+        if len(positions) > 1:
+            # Extracting just the x, y, z coordinates
+            coordinates = np.array([
+                [pos['x'], pos['z']]
+                for i, pos in positions.iterrows()
+            ])
+
+            # Calculate mean position
+            mean_position = np.mean(coordinates, axis=0)
+
+            # Calculate deviations from the mean
+            deviations = np.linalg.norm(coordinates - mean_position, axis=1)
+            all_deviations += deviations.tolist()
+
+            # Calculate standard deviation (precision)
+            precision = np.std(deviations)
+
+            precision_results[id] = precision
+
+    precision_result_total = np.std(all_deviations)
+
+    return precision_results, precision_result_total
+
+
 def main():
     data_dir = '/Users/ikuta/Documents/Projects/wildpose-applications/data/springbok_herd2/'
     lidar_dir = os.path.join(data_dir, 'lidar')
@@ -166,6 +195,16 @@ def main():
     # timestamps = np.array(df['file_name'].apply(
     #     get_timestamp_from_pcd_fpath).tolist())
     # time = timestamps - timestamps[0]
+
+    # calculate the precision with stationary individuals
+    # ID 4&8
+    # Frame: 39--99
+    precisions, total_precision = calculate_precision({
+        4: dfs[4][39:99+1],
+        8: dfs[8][39:99+1],
+    })
+    print(precisions)
+    print(f'total precision: {total_precision}')
 
     # plot the data
     ax = plt.figure().add_subplot(projection='3d')
