@@ -28,9 +28,12 @@ def equal_3d_aspect(ax):
 
 def main():
     pcd_fpath = '/Users/ikuta/Documents/Projects/wildpose-self-calibrator/data/giraffe_stand/textured_pcds/coloured_accumulation.pcd'
-    xlim = (-2, 2)
-    ylim = (-2, 3)
-    zlim = (40, 50)
+    # xlim = (-2, 2)
+    # ylim = (-2, 3)
+    # zlim = (40, 50)
+    xlim = (-100, 100)
+    ylim = (-100, 100)
+    zlim = (85, 95)
 
     # load data
     pcd = o3d.io.read_point_cloud(pcd_fpath)

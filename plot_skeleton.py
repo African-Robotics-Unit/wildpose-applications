@@ -13,6 +13,7 @@ from matplotlib.pyplot import figure
 import scienceplots
 
 from utils.file_loader import load_camera_parameters
+from utils.camera import make_intrinsic_mat, make_extrinsic_mat
 from projection_functions import extract_rgb_from_image_pure, get_3d_from_2d_point
 
 
@@ -52,27 +53,6 @@ JOINTS = {
     'l_knee': [623, 465],
     'l_ankle': [653, 555],
 }
-
-
-def make_intrinsic(fx, fy, cx, cy):
-
-    intrinsic_mat = np.eye(4)
-    intrinsic_mat[0, 0] = fx
-    intrinsic_mat[0, 2] = cx
-    intrinsic_mat[1, 1] = fy
-    intrinsic_mat[1, 2] = cy
-
-    return intrinsic_mat
-
-
-def make_extrinsic(rot_mat, translation):
-
-    extrinsic_mat = np.eye(4)
-    extrinsic_mat[:3, :3] = rot_mat
-    extrinsic_mat[:-1, -1] = translation
-    extrinsic_mat[-1, -1] = 1
-
-    return extrinsic_mat
 
 
 def lidar2cam_projection(pcd, extrinsic):
@@ -195,8 +175,8 @@ def main():
             accumulated_pcd_in_lidar = np.vstack((accumulated_pcd_in_lidar, pcd_points))
 
     # load the camera parameters
-    intrinsic = make_intrinsic(fx, fy, cx, cy)
-    extrinsic = make_extrinsic(rot_mat, translation)
+    intrinsic = make_intrinsic_mat(fx, fy, cx, cy)
+    extrinsic = make_extrinsic_mat(rot_mat, translation)
 
     # project the point cloud to camera and its image sensor
     pcd_in_cam = lidar2cam_projection(accumulated_pcd_in_lidar, extrinsic)
