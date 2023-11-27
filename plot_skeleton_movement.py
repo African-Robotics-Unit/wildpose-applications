@@ -31,9 +31,9 @@ CONFIG = {
     "textured_pcd_dir": "data/lion_walk/textured_pcds",
 }
 IMG_WIDTH, IMG_HEIGHT = 1280, 720
-XLIM = (-1, 1)
-YLIM = (-1, 1)
-ZLIM = (42, 45)
+XLIM = (-100, 100)
+YLIM = (-100, 100)
+ZLIM = (40, 50)
 
 JOINTS = [
     {
