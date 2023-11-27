@@ -1,10 +1,15 @@
 import os
+import sys
+import cv2
 import numpy as np
 import pickle
+import glob
 import pandas as pd
+from tqdm import tqdm
 from scipy.signal import lombscargle, butter, filtfilt, detrend
 from scipy.interpolate import interp1d
 
+import matplotlib as mpl
 import matplotlib.pyplot as plt
 from matplotlib.pyplot import figure
 import matplotlib.animation as animation
@@ -15,8 +20,9 @@ import scienceplots
 from utils.file_loader import load_config_file
 
 
-plt.style.use(['science', 'nature', 'no-latex'])
-figure(figsize=(10, 6))
+# plt.style.use(['science', 'nature', 'no-latex'])
+# figure(figsize=(10, 6))
+mpl.style.use('ggplot')
 plt.rcParams.update({
     "pdf.fonttype": 42,
 })
@@ -47,6 +53,7 @@ def main():
         input_data = pickle.load(f)
     timestamps = np.array(input_data['timestamp'])
     data = input_data['data']
+    img_fpaths = glob.glob(os.path.join(config['sync_rgb_dir'], '*.jpeg'))
 
     df = pd.read_excel(os.path.join(config['scene_dir'], 'body_state.xlsx'))
     labels = df['state']
@@ -81,8 +88,8 @@ def main():
     normalized_y_filtered = normalize_data(np.array(y_filtered))
 
     # define plot settings
-    fig = plt.figure(figsize=(10,6))
-    n_frame = len(uniform_timestamps)
+    fig = plt.figure(figsize=(18,6))
+    n_frames = len(uniform_timestamps)
     df = pd.DataFrame({
         'x': uniform_timestamps,
         'y': normalized_y_filtered,
@@ -94,53 +101,34 @@ def main():
 
     # make the animation
     def animate(i):
+        # image
+        plt.subplot(1, 2, 1)
+        img_fpath = img_fpaths[i]
+        img = cv2.cvtColor(cv2.imread(img_fpath), cv2.COLOR_BGR2RGB)
+        plt.imshow(img)
+        plt.grid(False)
+        plt.axis('off')
+
+        # plot
+        plt.subplot(1, 2, 2)
         data = df.iloc[:int(i+1)]
         plt.plot(data['x'], data['y'], color='red')
         plt.xlabel('Time (s)')
         plt.ylabel('Amplitude')
         plt.xlim([xmin, xmax])
         plt.ylim([ymin, ymax])
-    ani = animation.FuncAnimation(fig, animate, frames=n_frame, repeat=True)
+
+        plt.subplots_adjust(wspace=0, hspace=0)
+
+    ani = animation.FuncAnimation(
+        fig, animate,
+        frames=tqdm(range(n_frames), file=sys.stdout),
+        repeat=True)
 
     # save the animation
     Writer = animation.writers['ffmpeg']
     writer = Writer(fps=20, metadata=dict(artist='Me'), bitrate=1800)
     ani.save('output.mp4', writer=writer)
-
-    # plt.plot(uniform_timestamps, normalized_y_filtered)
-    # ta = None
-    # tb = None
-    # color = None
-    # for i, t in enumerate(timestamps):
-    #     lbl = labels[i]
-    #     if (lbl == 1 or lbl == -1) and color is None:
-    #         ta = timestamps[i - 1]
-    #         if labels[i] == 1:
-    #             color = 'red'
-    #         elif labels[i] == -1:
-    #             color = 'blue'
-    #     elif color == 'red' and lbl != 1:
-    #         tb = timestamps[i]
-    #     elif color == 'blue' and lbl != -1:
-    #         tb = timestamps[i]
-    #     else:
-    #         continue
-
-    #     if ta is not None and tb is not None and color is not None:
-    #         plt.axvspan(ta, tb, color=color, alpha=0.3, linewidth=0)
-    #         ta = None
-    #         tb = None
-    #         color = None
-    # plt.xlabel('Time (s)')
-    # plt.ylabel('Amplitude')
-
-    # # calculate the Lomb-Scargle periodogram
-    # f = np.linspace(0.01, 2, 1000)  # Frequency range
-    # pgram = lombscargle(np.array(timestamps), np.array(ys), f)
-
-    # for fmt in ['svg', 'pdf']:
-    #     plt.savefig(f"results/output.{fmt}", format=fmt, bbox_inches="tight")
-    # plt.show()
 
 
 if __name__ == '__main__':
