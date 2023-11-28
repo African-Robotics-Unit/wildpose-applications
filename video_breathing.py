@@ -32,6 +32,7 @@ figure(figsize=(3.5 * 2, 2.5))   # max width is 3.5 for single column
 CONFIG = {
     "scene_dir": "data/lion_sleep3",
     "pcd_dir": "data/lion_sleep3/lidar",
+    "rgb_dir": "data/lion_sleep3/rgb",
     "sync_rgb_dir": "data/lion_sleep3/sync_rgb",
     "mask_dir": "data/lion_sleep3/masks_lion2",
     "textured_pcd_dir": "data/lion_sleep3/textured_pcds",
@@ -54,7 +55,7 @@ def main():
         input_data = pickle.load(f)
     timestamps = np.array(input_data['timestamp'])
     data = input_data['data']
-    img_fpaths = glob.glob(os.path.join(config['sync_rgb_dir'], '*.jpeg'))
+    img_fpaths = sorted(glob.glob(os.path.join(config['sync_rgb_dir'], '*.jpeg')))
 
     df = pd.read_excel(os.path.join(config['scene_dir'], 'body_state.xlsx'))
     labels = df['state']
@@ -91,7 +92,7 @@ def main():
     # define plot settings
     fig = plt.figure(figsize=(18,6), tight_layout=True)
     gs = gridspec.GridSpec(1, 2, width_ratios=[2, 3])
-    n_frames = 10 # len(uniform_timestamps)
+    n_frames = len(uniform_timestamps)
     df = pd.DataFrame({
         'x': uniform_timestamps,
         'y': normalized_y_filtered,
@@ -103,7 +104,8 @@ def main():
 
     # make the animation
     def animate(i):
-        plt.subplot(gs[0])  # Plot using GridSpec
+        # show the line plot
+        plt.subplot(gs[0])
         data = df.iloc[:int(i+1)]
         plt.plot(data['x'], data['y'], color='red')
         plt.xlabel('Time (s)')
@@ -111,7 +113,8 @@ def main():
         plt.xlim([xmin, xmax])
         plt.ylim([ymin, ymax])
 
-        plt.subplot(gs[1])  # Image using GridSpec
+        # show the corresponding video frame
+        plt.subplot(gs[1])
         img_fpath = img_fpaths[i]
         img = cv2.cvtColor(cv2.imread(img_fpath), cv2.COLOR_BGR2RGB)
         plt.imshow(img)
@@ -127,8 +130,8 @@ def main():
 
     # save the animation
     Writer = animation.writers['ffmpeg']
-    writer = Writer(fps=20, metadata=dict(artist='Me'), bitrate=1800)
-    ani.save('output.mp4', writer=writer)
+    writer = Writer(fps=10, metadata=dict(artist='Me'), bitrate=1800)
+    ani.save('results/output.mp4', writer=writer)
 
 
 if __name__ == '__main__':
