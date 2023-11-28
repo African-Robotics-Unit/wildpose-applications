@@ -214,10 +214,26 @@ def extract_rgb_from_image_pure(pcd_in_img, rgb_img, width, height):
     return pcd_colors, valid_mask
 
 
-def get_3d_from_2d_point(pcd_in_img, point_2d):
+def get_3d_from_2d_point(pcd_in_img, point_2d, z_range):
     point_2d = np.array(point_2d)
-    distances = LA.norm(pcd_in_img[:, :2] - point_2d, axis=1)
-    pt_idx = np.argmin(distances)
+
+    # Create a mask for points within the specified range
+    mask = (
+        (pcd_in_img[:, 2] >= z_range[0]) & (pcd_in_img[:, 2] <= z_range[1])
+    )
+
+    # Apply mask to pcd_in_img and calculate distances for the remaining points
+    masked_points = pcd_in_img[mask]
+    if masked_points.size == 0:
+        return None, None
+
+    distances = LA.norm(masked_points[:, :2] - point_2d, axis=1)
+    min_dist_idx = np.argmin(distances)
+
+    # Get the original index of the point in pcd_in_img
+    original_indices = np.arange(len(pcd_in_img))
+    pt_idx = original_indices[mask][min_dist_idx]
+
     return pcd_in_img[pt_idx, :], pt_idx
 
 

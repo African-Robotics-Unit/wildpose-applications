@@ -25,11 +25,11 @@ plt.rcParams.update({
 })
 
 CONFIG = {
-    "scene_dir": "data/jackal_stand",
-    "pcd_dir": "data/jackal_stand/lidar",
-    "sync_rgb_dir": "data/jackal_stand/sync_rgb",
-    'texture_img_fpath': 'data/jackal_stand/texture.jpeg',
-    "textured_pcd_dir": "data/jackal_stand/textured_pcds",
+    "scene_dir": "data/lion_walk",
+    "pcd_dir": "data/lion_walk/lidar",
+    "sync_rgb_dir": "data/lion_walk/sync_rgb",
+    'texture_img_fpath': 'data/lion_walk/texture.jpeg',
+    "textured_pcd_dir": "data/lion_walk/textured_pcds",
 }
 IMG_WIDTH, IMG_HEIGHT = 1280, 720
 XLIM = (-1, 0.2)
