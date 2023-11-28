@@ -220,7 +220,12 @@ def main():
                 isinstance(joint_2d, list) and
                 joint_2d[0] is not None and joint_2d[1] is not None
             ):
-                _, idx = get_3d_from_2d_point(pcd_in_img, joint_2d)
+                _, idx = get_3d_from_2d_point(
+                    pcd_in_img, joint_2d,
+                    z_range=ZLIM
+                )
+                if idx is None:
+                    raise 'Error: the axis ranges were too narrow.'
                 joint_3d = pcd_in_cam[idx, :]
                 ax.scatter(
                     joint_3d[0], joint_3d[1], joint_3d[2],
