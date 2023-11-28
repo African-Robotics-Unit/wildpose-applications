@@ -13,6 +13,7 @@ import matplotlib as mpl
 import matplotlib.pyplot as plt
 from matplotlib.pyplot import figure
 import matplotlib.animation as animation
+import matplotlib.gridspec as gridspec
 import seaborn as sns
 import scienceplots
 
@@ -88,8 +89,9 @@ def main():
     normalized_y_filtered = normalize_data(np.array(y_filtered))
 
     # define plot settings
-    fig = plt.figure(figsize=(18,6))
-    n_frames = len(uniform_timestamps)
+    fig = plt.figure(figsize=(18,6), tight_layout=True)
+    gs = gridspec.GridSpec(1, 2, width_ratios=[2, 3])
+    n_frames = 10 # len(uniform_timestamps)
     df = pd.DataFrame({
         'x': uniform_timestamps,
         'y': normalized_y_filtered,
@@ -101,16 +103,7 @@ def main():
 
     # make the animation
     def animate(i):
-        # image
-        plt.subplot(1, 2, 1)
-        img_fpath = img_fpaths[i]
-        img = cv2.cvtColor(cv2.imread(img_fpath), cv2.COLOR_BGR2RGB)
-        plt.imshow(img)
-        plt.grid(False)
-        plt.axis('off')
-
-        # plot
-        plt.subplot(1, 2, 2)
+        plt.subplot(gs[0])  # Plot using GridSpec
         data = df.iloc[:int(i+1)]
         plt.plot(data['x'], data['y'], color='red')
         plt.xlabel('Time (s)')
@@ -118,7 +111,14 @@ def main():
         plt.xlim([xmin, xmax])
         plt.ylim([ymin, ymax])
 
-        plt.subplots_adjust(wspace=0, hspace=0)
+        plt.subplot(gs[1])  # Image using GridSpec
+        img_fpath = img_fpaths[i]
+        img = cv2.cvtColor(cv2.imread(img_fpath), cv2.COLOR_BGR2RGB)
+        plt.imshow(img)
+        plt.grid(False)
+        plt.axis('off')
+
+        plt.subplots_adjust(wspace=0, hspace=0)  # Adjust spacing as needed
 
     ani = animation.FuncAnimation(
         fig, animate,
