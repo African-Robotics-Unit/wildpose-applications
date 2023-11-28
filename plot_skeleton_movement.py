@@ -33,7 +33,7 @@ CONFIG = {
 IMG_WIDTH, IMG_HEIGHT = 1280, 720
 XLIM = (-100, 100)
 YLIM = (-100, 100)
-ZLIM = (40, 50)
+ZLIM = (42, 46)
 
 JOINTS = [
     {
@@ -55,6 +55,14 @@ JOINTS = [
         'l_knee': [663, 377],
         'l_ankle': [715, 475],
     }
+]
+
+BONES = [
+    ['nose', 'r_eye'], ['nose', 'l_eye'], ['r_eye', 'l_eye'],
+    ['r_eye', 'r_shoulder'], ['r_shoulder', 'r_elbow'], ['r_elbow', 'r_wrist'],
+    ['r_shoulder', 'r_hip'], ['r_hip', 'r_knee'], ['r_knee', 'r_ankle'],
+    ['l_eye', 'l_shoulder'], ['l_shoulder', 'l_elbow'], ['l_elbow', 'l_wrist'],
+    ['l_shoulder', 'l_hip'], ['l_hip', 'l_knee'], ['l_knee', 'l_ankle'],
 ]
 
 
@@ -211,27 +219,45 @@ def main():
         masked_colors = colors[mask]
 
         # plot the data
-        ax = plt.figure(figsize=(12,8), tight_layout=True).add_subplot(projection='3d')
+        fig, ax = plt.subplots(subplot_kw=dict(projection='3d'),
+                       gridspec_kw=dict(top=1, left=0, right=1, bottom=0))
+        # ax = plt.figure(figsize=(12,8), tight_layout=True).add_subplot(projection='3d')
         ax.view_init(elev=-90, azim=-90)
+
+        # plot the PCD frame
         ax.scatter(
             masked_points[:, 0], masked_points[:, 1], masked_points[:, 2],
             c=masked_colors, s=1)  # s is the size of the points
+
+        # plot joints and collect 3D coordinates of joints
+        joint_3d_coords = {}
         for joint_name, joint_2d in joint_info.items():
-            if (
-                isinstance(joint_2d, list) and
-                joint_2d[0] is not None and joint_2d[1] is not None
-            ):
-                _, idx = get_3d_from_2d_point(
-                    pcd_in_img, joint_2d,
-                    z_range=ZLIM
-                )
+            if isinstance(joint_2d, list) and joint_2d[0] is not None and joint_2d[1] is not None:
+                _, idx = get_3d_from_2d_point(pcd_in_img, joint_2d, z_range=ZLIM)
                 if idx is None:
                     raise 'Error: the axis ranges were too narrow.'
-                joint_3d = pcd_in_cam[idx, :]
+                joint_3d_coords[joint_name] = pcd_in_cam[idx, :]
                 ax.scatter(
-                    joint_3d[0], joint_3d[1], joint_3d[2],
-                    color='r', s=20)
-                print(f'{joint_name}: {joint_3d}')
+                    joint_3d_coords[joint_name][0],
+                    joint_3d_coords[joint_name][1],
+                    joint_3d_coords[joint_name][2],
+                    color='r', s=20
+                )
+                print(f'{joint_name}: {joint_3d_coords[joint_name]}')
+            else:
+                joint_3d_coords[joint_name] = None
+
+        # plot bones
+        for bone in BONES:
+            start_joint, end_joint = bone
+            if joint_3d_coords[start_joint] is not None and joint_3d_coords[end_joint] is not None:
+                ax.plot(
+                    [joint_3d_coords[start_joint][0], joint_3d_coords[end_joint][0]],
+                    [joint_3d_coords[start_joint][1], joint_3d_coords[end_joint][1]],
+                    [joint_3d_coords[start_joint][2], joint_3d_coords[end_joint][2]],
+                    color='blue'  # You can change the color as needed
+                )
+
         equal_3d_aspect(ax=ax)
         ax.set_xlabel('x (m)')
         ax.set_ylabel('y (m)')
