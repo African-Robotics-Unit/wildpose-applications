@@ -211,7 +211,8 @@ def main():
         masked_colors = colors[mask]
 
         # plot the data
-        ax = plt.figure().add_subplot(projection='3d')
+        ax = plt.figure(figsize=(12,8), tight_layout=True).add_subplot(projection='3d')
+        ax.view_init(elev=-90, azim=-90)
         ax.scatter(
             masked_points[:, 0], masked_points[:, 1], masked_points[:, 2],
             c=masked_colors, s=1)  # s is the size of the points
