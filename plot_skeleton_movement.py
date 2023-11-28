@@ -34,6 +34,7 @@ IMG_WIDTH, IMG_HEIGHT = 1280, 720
 XLIM = (-100, 100)
 YLIM = (-100, 100)
 ZLIM = (42, 46)
+FRAME_MARGIN = 3
 
 JOINTS = [
     {
@@ -54,6 +55,63 @@ JOINTS = [
         'l_hip': [769, 377],
         'l_knee': [663, 377],
         'l_ankle': [715, 475],
+    },
+    {
+        'rgb_filename': '660005_1670481561_458553064.jpeg',
+        'lidar_filename': 'livox_frame_1670481561_459852744.pcd',
+        'nose': [577, 164],
+        'r_eye': [543, 100],
+        'l_eye': [595, 102],
+        'r_shoulder': [457, 174],
+        'r_elbow': [494, 330],
+        'r_wrist': [533, 480],
+        'r_hip': [None, None],
+        'r_knee': [None, None],
+        'r_ankle': [None, None],
+        'l_shoulder': [None, None],
+        'l_elbow': [596, 329],
+        'l_wrist': [597, 416],
+        'l_hip': [None, None],
+        'l_knee': [None, None],
+        'l_ankle': [None, None],
+    },
+    {
+        'rgb_filename': '660260_1670481562_958554632.jpeg',
+        'lidar_filename': 'livox_frame_1670481562_958825160.pcd',
+        'nose': [844, 274],
+        'r_eye': [817, 202],
+        'l_eye': [None, None],
+        'r_shoulder': [641, 231],
+        'r_elbow': [614, 355],
+        'r_wrist': [660, 457],
+        'r_hip': [535, 172],
+        'r_knee': [555, 296],
+        'r_ankle': [544, 422],
+        'l_shoulder': [None, None],
+        'l_elbow': [None, None],
+        'l_wrist': [None, None],
+        'l_hip': [None, None],
+        'l_knee': [None, None],
+        'l_ankle': [None, None],
+    },
+    {
+        'rgb_filename': '660447_1670481564_058760744.jpeg',
+        'lidar_filename': 'livox_frame_1670481564_059593064.pcd',
+        'nose': [829, 328],
+        'r_eye': [800, 264],
+        'l_eye': [852, 267],
+        'r_shoulder': [679, 259],
+        'r_elbow': [693, 426],
+        'r_wrist': [None, None],
+        'r_hip': [588, 202],
+        'r_knee': [568, 333],
+        'r_ankle': [553, 441],
+        'l_shoulder': [None, None],
+        'l_elbow': [814, 431],
+        'l_wrist': [836, 516],
+        'l_hip': [None, None],
+        'l_knee': [None, None],
+        'l_ankle': [None, None],
     }
 ]
 
@@ -174,6 +232,11 @@ def main():
     intrinsic = make_intrinsic_mat(fx, fy, cx, cy)
     extrinsic = make_extrinsic_mat(rot_mat, translation)
 
+    # prepare the plot
+    ax = plt.figure(figsize=(30,8), tight_layout=True).add_subplot(projection='3d')
+    ax.view_init(elev=-90, azim=-90)
+
+    x_pos_margin = 0
     for joint_info in JOINTS:
         # load the texture image
         img_fpath = os.path.join(rgb_dir, joint_info['rgb_filename'])
@@ -200,11 +263,6 @@ def main():
         textured_pcd.colors = o3d.utility.Vector3dVector(
             pcd_with_rgb[:, 3:])
 
-        # save the coloured point cloud
-        o3d.io.write_point_cloud(
-            os.path.join(output_dir, 'coloured_accumulation.pcd'),
-            textured_pcd)
-
         # load data
         points = np.array(textured_pcd.points)  # [N, 3]
         colors = np.array(textured_pcd.colors)  # [N, 3]
@@ -218,15 +276,9 @@ def main():
         masked_points = points[mask]
         masked_colors = colors[mask]
 
-        # plot the data
-        fig, ax = plt.subplots(subplot_kw=dict(projection='3d'),
-                       gridspec_kw=dict(top=1, left=0, right=1, bottom=0))
-        # ax = plt.figure(figsize=(12,8), tight_layout=True).add_subplot(projection='3d')
-        ax.view_init(elev=-90, azim=-90)
-
         # plot the PCD frame
         ax.scatter(
-            masked_points[:, 0], masked_points[:, 1], masked_points[:, 2],
+            masked_points[:, 0] + x_pos_margin, masked_points[:, 1], masked_points[:, 2],
             c=masked_colors, s=1)  # s is the size of the points
 
         # plot joints and collect 3D coordinates of joints
@@ -238,7 +290,7 @@ def main():
                     raise 'Error: the axis ranges were too narrow.'
                 joint_3d_coords[joint_name] = pcd_in_cam[idx, :]
                 ax.scatter(
-                    joint_3d_coords[joint_name][0],
+                    joint_3d_coords[joint_name][0] + x_pos_margin,
                     joint_3d_coords[joint_name][1],
                     joint_3d_coords[joint_name][2],
                     color='r', s=20
@@ -252,21 +304,21 @@ def main():
             start_joint, end_joint = bone
             if joint_3d_coords[start_joint] is not None and joint_3d_coords[end_joint] is not None:
                 ax.plot(
-                    [joint_3d_coords[start_joint][0], joint_3d_coords[end_joint][0]],
+                    [joint_3d_coords[start_joint][0] + x_pos_margin, joint_3d_coords[end_joint][0] + x_pos_margin],
                     [joint_3d_coords[start_joint][1], joint_3d_coords[end_joint][1]],
                     [joint_3d_coords[start_joint][2], joint_3d_coords[end_joint][2]],
                     color='blue'  # You can change the color as needed
                 )
 
-        equal_3d_aspect(ax=ax)
-        ax.set_xlabel('x (m)')
-        ax.set_ylabel('y (m)')
-        ax.set_zlabel('Depth (m)')
+        # increase the margin
+        x_pos_margin += FRAME_MARGIN
 
-        plt.show()
+    equal_3d_aspect(ax=ax)
+    ax.set_xlabel('x (m)')
+    ax.set_ylabel('y (m)')
+    ax.set_zlabel('Depth (m)')
 
-
-        break
+    plt.show()
 
 
 if __name__ == '__main__':
