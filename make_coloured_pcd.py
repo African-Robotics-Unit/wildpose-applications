@@ -13,11 +13,11 @@ from utils.camera import make_intrinsic_mat, make_extrinsic_mat
 
 
 CONFIG = {
-    "scene_dir": "data/giraffe_stand",
-    "pcd_dir": "data/giraffe_stand/lidar",
-    "sync_rgb_dir": "data/giraffe_stand/sync_rgb",
-    'texture_img_fpath': 'data/giraffe_stand/texture.jpeg',
-    "textured_pcd_dir": "data/giraffe_stand/textured_pcds",
+    "scene_dir": "data/martial_eagle_stand",
+    "pcd_dir": "data/martial_eagle_stand/lidar",
+    "sync_rgb_dir": "data/martial_eagle_stand/sync_rgb",
+    'texture_img_fpath': 'data/martial_eagle_stand/texture.jpeg',
+    "textured_pcd_dir": "data/martial_eagle_stand/textured_pcds",
 }
 IMG_WIDTH, IMG_HEIGHT = 1280, 720
 
