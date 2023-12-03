@@ -1,0 +1,123 @@
+{
+    "annotations": [
+        {
+            "area": 305316,
+            "bbox": [
+                "394",
+                "123",
+                "594",
+                "514"
+            ],
+            "category_id": 1,
+            "id": 0,
+            "image_id": 0,
+            "iscrowd": 0,
+            "segmentation": [
+                [
+                    "394",
+                    "123",
+                    "987",
+                    "123",
+                    "987",
+                    "636",
+                    "394",
+                    "636"
+                ]
+            ]
+        },
+        {
+            "area": 137280,
+            "bbox": [
+                "976",
+                "58",
+                "286",
+                "480"
+            ],
+            "category_id": 2,
+            "id": 1,
+            "image_id": 0,
+            "iscrowd": 0,
+            "segmentation": [
+                [
+                    "976",
+                    "58",
+                    "1261",
+                    "58",
+                    "1261",
+                    "537",
+                    "976",
+                    "537"
+                ]
+            ]
+        },
+        {
+            "area": 52428,
+            "bbox": [
+                "2",
+                "252",
+                "204",
+                "257"
+            ],
+            "category_id": 3,
+            "id": 2,
+            "image_id": 0,
+            "iscrowd": 0,
+            "segmentation": [
+                [
+                    "2",
+                    "252",
+                    "205",
+                    "252",
+                    "205",
+                    "508",
+                    "2",
+                    "508"
+                ]
+            ]
+        }
+    ],
+    "categories": [
+        {
+            "id": 1,
+            "name": "1",
+            "supercategory": "1"
+        },
+        {
+            "id": 2,
+            "name": "2",
+            "supercategory": "2"
+        },
+        {
+            "id": 3,
+            "name": "3",
+            "supercategory": "3"
+        }
+    ],
+    "images": [
+        {
+            "coco_url": "",
+            "date_captured": "2023-09-15",
+            "file_name": "E:/srcs/amir/gemsbok/train/625672_1670254889_595865392.jpeg",
+            "flickr_url": "",
+            "height": 720,
+            "id": 0,
+            "license": 0,
+            "width": 1280
+        }
+    ],
+    "info": {
+        "contributor": "Contributor",
+        "date_created": "2023-09-15",
+        "description": "Description",
+        "url": "",
+        "version": "1",
+        "year": 2023
+    },
+    "license": [
+        {
+            "id": 0,
+            "name": "",
+            "url": ""
+        }
+    ]
+}
