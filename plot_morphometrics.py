@@ -82,11 +82,14 @@ def main():
     for animal, data in DATA.items():
         # collect values
         ys = [np.mean(data[l]) for l in length_kinds]
+        y_errs = [np.std(data[l]) for l in length_kinds]
         # draw bars
         offset = width * multiplier
         rects = ax.bar(
-            x + offset,
-            height=ys,
+            x + offset, ys,
+            yerr=y_errs,
+            ecolor='black',
+            capsize=10,
             width=width,
             label=animal)
         ax.bar_label(rects, padding=3)
