@@ -6,6 +6,7 @@ from collections import OrderedDict
 from scipy.signal import lombscargle, butter, filtfilt, detrend
 from scipy.interpolate import interp1d
 
+import matplotlib
 import matplotlib.pyplot as plt
 from matplotlib.pyplot import figure
 import scienceplots
@@ -13,11 +14,15 @@ import scienceplots
 from utils.file_loader import load_config_file
 
 
-plt.style.use(['science', 'nature', 'no-latex'])
+# plt.style.use(['science', 'nature', 'no-latex'])
+matplotlib.rc('font', family='sans-serif')
+matplotlib.rc('font', serif='Arial')
 plt.rcParams.update({
     "pdf.fonttype": 42,
 })
 # figure(figsize=(3.5, 2.5))   # max width is 3.5 for single column
+# plt.gca().spines['top'].set_visible(False)
+# plt.gca().spines['right'].set_visible(False)
 
 DATA = {
     'Giraffe': {
@@ -79,6 +84,8 @@ def main():
         figsize=(3.5, 2.5),
         layout='constrained'
     )
+    plt.gca().spines['top'].set_visible(False)
+    plt.gca().spines['right'].set_visible(False)
     for animal, data in DATA.items():
         # collect values
         ys = [np.mean(data[l]) for l in length_kinds]
@@ -97,11 +104,14 @@ def main():
 
     ax.set_ylabel('Length (m)')
     ax.set_xticks(x + width/2, length_kinds)
-    ax.legend(loc='upper left')
+    ax.legend(loc='upper right')
     # ax.set_ylim(0, 250)
 
-    # for fmt in ['svg', 'pdf']:
-    #     plt.savefig(f"results/output.{fmt}", format=fmt, bbox_inches="tight")
+    ax.spines['top'].set_visible(False)
+    ax.spines['right'].set_visible(False)
+
+    for fmt in ['svg', 'pdf']:
+        plt.savefig(f"results/output.{fmt}", format=fmt, bbox_inches="tight")
     plt.show()
 
 
