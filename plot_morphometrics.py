@@ -96,7 +96,7 @@ def main():
         multiplier += 1
 
     ax.set_ylabel('Length (m)')
-    ax.set_xticks(x + width, length_kinds)
+    ax.set_xticks(x + width/2, length_kinds)
     ax.legend(loc='upper left')
     # ax.set_ylim(0, 250)
 
