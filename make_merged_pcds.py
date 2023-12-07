@@ -12,9 +12,9 @@ from utils.camera import make_intrinsic_mat, make_extrinsic_mat
 
 
 CONFIG = {
-    "scene_dir": "data/martial_eagle_stand",
-    "pcd_dir": "data/martial_eagle_stand/lidar",
-    "merged_pcd_dir": "data/martial_eagle_stand/merged_pcd",
+    "scene_dir": "data/giraffe_stand",
+    "pcd_dir": "data/giraffe_stand/lidar",
+    "merged_pcd_dir": "data/giraffe_stand/merged_pcd",
 }
 MERGE_SIZE = 5
 
@@ -30,7 +30,7 @@ def main():
     lidar_list = sorted(glob.glob(os.path.join(lidar_dir, '*.pcd')))
 
     # accumulate all the point cloud
-    for i in range(len(lidar_list) - MERGE_SIZE):
+    for i in range(len(lidar_list) - MERGE_SIZE + 1):
         accumulated_points = None
         j = i + MERGE_SIZE
         for pcd_fpath in lidar_list[i:j]:
