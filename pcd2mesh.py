@@ -1,3 +1,4 @@
+import os
 import numpy as np
 import pyvista as pv
 import open3d as o3d
@@ -24,8 +25,12 @@ def main():
     # cloud.plot()
 
     volume = cloud.delaunay_3d(alpha=0.05)
-    shell = volume.extract_geometry()
-    shell.plot()
+    mesh = volume.extract_geometry()
+    mesh.save(os.path.join(
+        os.path.dirname(pcd_fpath),
+        'mesh.stl'
+    ))
+    mesh.plot()
 
 if __name__ == '__main__':
     main()
