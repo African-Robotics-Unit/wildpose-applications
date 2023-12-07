@@ -12,9 +12,9 @@ from utils.camera import make_intrinsic_mat, make_extrinsic_mat
 
 
 CONFIG = {
-    "scene_dir": "data/giraffe_stand",
-    "pcd_dir": "data/giraffe_stand/lidar",
-    "merged_pcd_dir": "data/giraffe_stand/merged_pcd",
+    "scene_dir": "data/martial_eagle_stand",
+    "pcd_dir": "data/martial_eagle_stand/lidar",
+    "merged_pcd_dir": "data/martial_eagle_stand/merged_pcd",
 }
 MERGE_SIZE = 5
 
