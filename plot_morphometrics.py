@@ -1,4 +1,4 @@
-import os
+import pandas as pd
 import numpy as np
 
 import matplotlib
@@ -92,6 +92,10 @@ def main():
             width=width,
             label=animal)
         # ax.bar_label(rects, fmt='%f', padding=3)
+        print(pd.DataFrame(
+            np.array([ys, y_errs]),
+            columns=length_kinds
+        ))
         multiplier += 1
 
     ax.set_ylabel('Length (m)')

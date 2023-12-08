@@ -266,7 +266,7 @@ def main():
 
     df = pd.DataFrame(
         result,
-        columns =[f'{a}–{b}' for a, b in COMBINATIONS]
+        columns=[f'{a}–{b}' for a, b in COMBINATIONS]
     )
     df.to_csv('results/output.csv')
     print(df)
