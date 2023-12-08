@@ -5,10 +5,14 @@ import open3d as o3d
 
 
 def main():
-    pcd_fpath = '/Users/ikuta/Documents/Projects/wildpose-self-calibrator/data/giraffe_stand/textured_pcds/coloured_accumulation.pcd'
+    pcd_fpath = '/Users/ikuta/Documents/Projects/wildpose-self-calibrator/data/martial_eagle_stand/textured_pcds/coloured_accumulation.pcd'
     xlim = (-100, 100)
     ylim = (-100, 100)
-    zlim = (85, 95)
+    zlim = (18, 19)
+    # pcd_fpath = '/Users/ikuta/Documents/Projects/wildpose-self-calibrator/data/giraffe_stand/textured_pcds/coloured_accumulation.pcd'
+    # xlim = (-100, 100)
+    # ylim = (-100, 100)
+    # zlim = (85, 95)
 
     # load data
     pcd = o3d.io.read_point_cloud(pcd_fpath)
@@ -24,7 +28,7 @@ def main():
     cloud = pv.PolyData(filtered_points)
     # cloud.plot()
 
-    volume = cloud.delaunay_3d(alpha=0.05)
+    volume = cloud.delaunay_3d(alpha=0.015)
     mesh = volume.extract_geometry()
     mesh.save(os.path.join(
         os.path.dirname(pcd_fpath),
