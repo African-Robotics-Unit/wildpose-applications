@@ -164,7 +164,7 @@ def main():
         result,
         columns =[f'{a}–{b}' for a, b in COMBINATIONS]
     )
-    df.to_csv('results/output.csv', encoding='utf-8')
+    df.to_csv('results/output.csv')
     print(df)
 
 
