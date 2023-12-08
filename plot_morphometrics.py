@@ -1,20 +1,10 @@
 import os
 import numpy as np
-import pickle
-import pandas as pd
-from collections import OrderedDict
-from scipy.signal import lombscargle, butter, filtfilt, detrend
-from scipy.interpolate import interp1d
 
 import matplotlib
 import matplotlib.pyplot as plt
-from matplotlib.pyplot import figure
-import scienceplots
-
-from utils.file_loader import load_config_file
 
 
-# plt.style.use(['science', 'nature', 'no-latex'])
 matplotlib.rc('font', family='sans-serif')
 matplotlib.rc('font', serif='Arial')
 plt.rcParams.update({
