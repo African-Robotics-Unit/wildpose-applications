@@ -7,11 +7,11 @@ from tqdm import tqdm
 
 
 CONFIG = {
-    "scene_dir": "data/martial_eagle_stand",
-    "rgb_dir": "data/martial_eagle_stand/sync_rgb",
-    "pcd_dir": "data/martial_eagle_stand/lidar",
-    "merged_rgb_dir": "data/martial_eagle_stand/merged_rgb",
-    "merged_pcd_dir": "data/martial_eagle_stand/merged_pcd",
+    "scene_dir": "data/giraffe_stand",
+    "rgb_dir": "data/giraffe_stand/sync_rgb",
+    "pcd_dir": "data/giraffe_stand/lidar",
+    "merged_rgb_dir": "data/giraffe_stand/merged_rgb",
+    "merged_pcd_dir": "data/giraffe_stand/merged_pcd",
 }
 MERGE_SIZE = 5
 
