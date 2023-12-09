@@ -113,7 +113,7 @@ def main():
     data_dir = '/Users/ikuta/Documents/Projects/wildpose-applications/data/springbok_herd2/'
     lidar_dir = os.path.join(data_dir, 'lidar')
     rgb_dir = os.path.join(data_dir, 'sync_rgb')
-    mask_dir = os.path.join(data_dir, 'masks2')
+    mask_dir = os.path.join(data_dir, 'masks2_fixed')
     calib_fpath = os.path.join(data_dir, 'manual_calibration.json')
 
     # load data
@@ -177,17 +177,8 @@ def main():
             columns =['time', 'x', 'y', 'z']
         )
 
-    # # filter the positions
-    # dfs = {}
-    # for csv_fpath in csv_fpaths:
-    #     key = os.path.splitext(os.path.basename(csv_fpath))[0]
-    #     df = pd.read_csv(
-    #         csv_fpath,
-    #         names=['time', 'x', 'y', 'z'], header=0
-    #     )
-    #     df = df.where(df != -1e-6, other=np.nan)
-    #     dfs[key] = df
-    # dfs = median_filter_3d_positions(dfs, filter_size=5)
+    # filter the positions
+    dfs = median_filter_3d_positions(dfs, filter_size=5)
 
     # # load timestamp
     # csv_fpath = os.path.join(data_dir, 'lidar_frames.csv')
