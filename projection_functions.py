@@ -302,3 +302,30 @@ def get_coloured_point_cloud(
         pcd_seg[valid_pt_locs[valid_pt_locs_mask]] = obj_id
 
     return pcd_colors, valid_pcd_mask, pcd_seg, pcd_seg_mask
+
+
+def closest_point(target, point_cloud_2d):
+    """
+    Find the closest point to the target point from a 2D point cloud.
+
+    Parameters:
+    - target (np.array): A numpy array of shape [1, 2] representing the target point.
+    - point_cloud_2d (np.array): A numpy array of shape [N, 2] representing the 2D point cloud.
+
+    Returns:
+    - closest_pt (np.array): The closest point in the point cloud to the target.
+    - min_distance (float): The distance between the closest point and the target.
+    """
+    # Calculate the squared Euclidean distances
+    squared_distances = np.sum((point_cloud_2d - target)**2, axis=1)
+
+    # Find the index of the minimum distance
+    min_index = np.argmin(squared_distances)
+
+    # Retrieve the closest point
+    closest_2dpt = point_cloud_2d[min_index]
+
+    # Calculate the minimum distance (Euclidean)
+    min_distance = np.sqrt(squared_distances[min_index])
+
+    return closest_2dpt, min_index
