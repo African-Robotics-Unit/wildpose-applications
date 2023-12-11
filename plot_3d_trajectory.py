@@ -8,6 +8,7 @@ import cv2
 from tqdm import tqdm
 import scipy.ndimage
 
+import matplotlib
 import matplotlib.pyplot as plt
 from matplotlib.pyplot import figure
 import scienceplots
@@ -22,6 +23,8 @@ from config import COLORS, colors_indices
 
 # plt.style.use(['science', 'nature', 'no-latex'])
 # figure(figsize=(10, 6))
+matplotlib.rc('font', family='sans-serif')
+matplotlib.rc('font', serif='Arial')
 plt.rcParams.update({
     'legend.frameon': False,
     "pdf.fonttype": 42,
@@ -180,13 +183,6 @@ def main():
     # filter the positions
     dfs = median_filter_3d_positions(dfs, filter_size=5)
 
-    # # load timestamp
-    # csv_fpath = os.path.join(data_dir, 'lidar_frames.csv')
-    # df = pd.read_csv(csv_fpath, names=['file_name'], header=0, index_col=0)
-    # timestamps = np.array(df['file_name'].apply(
-    #     get_timestamp_from_pcd_fpath).tolist())
-    # time = timestamps - timestamps[0]
-
     # calculate the precision with stationary individuals
     # ID 4&8
     # Frame: 39--99
@@ -198,7 +194,7 @@ def main():
     print(f'total precision: {total_precision}')
 
     # plot the data
-    ax = plt.figure().add_subplot(projection='3d')
+    ax = plt.figure(layout='constrained').add_subplot(projection='3d')
     for k, v in dfs.items():
         # define color
         rgb = COLORS[colors_indices[int(k)]]['color']
