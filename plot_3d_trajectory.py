@@ -20,6 +20,8 @@ from utils.format_conversion import get_timestamp_from_img_fpath
 from projection_functions import extract_rgb_from_image
 from config import COLORS, colors_indices
 
+from projection_functions import closest_point
+
 
 # plt.style.use(['science', 'nature', 'no-latex'])
 # figure(figsize=(10, 6))
@@ -137,40 +139,51 @@ def main():
         # load the frame
         rgb_img = load_rgb_img(img_fpath)
         pcd_open3d = load_pcd(pcd_fpath, mode='open3d')
-        pcd_in_lidar = np.asarray(pcd_open3d.points)
-        seg_mask = np.load(mask_fpath)
+        pts_in_lidar = np.asarray(pcd_open3d.points)
+        seg_mask = np.load(mask_fpath)  # [n_id, 1, H, W]
         obj_ids = np.load(mask_id_fpath)
         timestamp = get_timestamp_from_img_fpath(img_fpath)
         img_key = os.path.basename(img_fpath).replace('.jpeg', '_3.jpeg')
 
         # reprojection
-        pcd_in_cam = lidar2cam_projection(pcd_in_lidar, extrinsic)
+        pcd_in_cam = lidar2cam_projection(pts_in_lidar, extrinsic)
         pcd_in_img = cam2image_projection(pcd_in_cam, intrinsic)
         pcd_in_cam = pcd_in_cam.T[:, :-1]
         pcd_in_img = pcd_in_img.T[:, :-1]
 
-        obj_pos_colors = []
+        # # eroded_2d_mask -> median 3D point
+        # # erode the segmentation mask to reduce the error of estimated 3d positions
+        # for i in range(seg_mask.shape[0]):
+        #     # seg_mask.shape should be (n, 1, H, W)
+        #     seg_mask[i, 0, :, :] = erode_mask(seg_mask[i, 0, :, :], kernel_size=(5,5), iterations=4)
 
-        # erode the segmentation mask to reduce the error of estimated 3d positions
-        for i in range(seg_mask.shape[0]):
-            # seg_mask.shape should be (n, 1, H, W)
-            seg_mask[i, 0, :, :] = erode_mask(seg_mask[i, 0, :, :], kernel_size=(5,5), iterations=2)
+        # colors, valid_mask, obj_points, obj_mask_from_color = extract_rgb_from_image(
+        #     pcd_in_img, pcd_in_cam, rgb_img, seg_mask, obj_ids,
+        #     width=IMG_WIDTH, height=IMG_HEIGHT
+        # )
 
-        colors, valid_mask, obj_points, obj_mask_from_color = extract_rgb_from_image(
-            pcd_in_img, pcd_in_cam, rgb_img, seg_mask, obj_ids,
-            width=IMG_WIDTH, height=IMG_HEIGHT
-        )
+        # # store the position data
+        # for id, points in obj_points.items():
+        #     position_3d = np.median(points, axis=0)
+        #     if id not in positions_3d.keys():
+        #         positions_3d[id] = []
+        #     positions_3d[id].append([timestamp] + position_3d.tolist())
 
-        pcd_with_rgb = np.concatenate([pcd_in_cam, colors], axis=1)
-        # pcd_with_rgb = pcd_with_rgb[valid_mask]
-
-        # store the position data
-        for id, points in obj_points.items():
-            # position_3d = np.mean(points, axis=0)
-            position_3d = np.median(points, axis=0)
-            if id not in positions_3d.keys():
-                positions_3d[id] = []
-            positions_3d[id].append([timestamp] + position_3d.tolist())
+        # median_2d -> 3d point
+        n_id = seg_mask.shape[0]
+        assert n_id == len(obj_ids)
+        for idx, obj_id in enumerate(obj_ids):
+            mask = seg_mask[idx, 0]
+            mask_ys, mask_xs = np.where(mask)
+            target_2d_pt = np.array([
+                np.median(mask_xs),
+                np.median(mask_ys),
+            ])
+            _, pt_idx = closest_point(target_2d_pt, pcd_in_img[:, :2])
+            pt3d = pcd_in_cam[pt_idx, :]
+            if obj_id not in positions_3d.keys():
+                positions_3d[obj_id] = []
+            positions_3d[obj_id].append([timestamp] + pt3d.tolist())
 
     # array to dataframe
     dfs = {}
@@ -181,7 +194,7 @@ def main():
         )
 
     # filter the positions
-    dfs = median_filter_3d_positions(dfs, filter_size=5)
+    # dfs = median_filter_3d_positions(dfs, filter_size=5)
 
     # calculate the precision with stationary individuals
     # ID 4&8
