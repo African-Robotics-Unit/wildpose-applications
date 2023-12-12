@@ -1,26 +1,15 @@
 import os
-import re
-import glob
-import pandas as pd
 import numpy as np
-import json
 import cv2
-from tqdm import tqdm
-import scipy.ndimage
 
 import matplotlib
 import matplotlib.pyplot as plt
 from matplotlib.pyplot import figure
 import scienceplots
 
-from utils.file_loader import load_camera_parameters, load_rgb_img, load_pcd
+from utils.file_loader import load_camera_parameters, load_pcd
 from utils.camera import make_intrinsic_mat, make_extrinsic_mat
 from utils.projection import lidar2cam_projection, cam2image_projection
-from utils.format_conversion import get_timestamp_from_img_fpath
-from projection_functions import extract_rgb_from_image
-from config import COLORS, colors_indices
-
-from projection_functions import closest_point
 
 
 # plt.style.use(['science', 'nature', 'no-latex'])
