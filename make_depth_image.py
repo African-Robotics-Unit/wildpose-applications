@@ -21,10 +21,10 @@ plt.rcParams.update({
     "pdf.fonttype": 42,
 })
 
-MEAS_DIR = '/Users/ikuta/Documents/Projects/wildpose-self-calibrator/data/jackal_stand'
+MEAS_DIR = '/Users/ikuta/Documents/Projects/wildpose-self-calibrator/data/cheetah'
 PCD_FPATH = os.path.join(
     MEAS_DIR, 'lidar',
-    'livox_frame_1670428174_436715232.pcd'
+    'livox_frame_1670718150_600439536.pcd'
 )
 CALIB_FPATH = os.path.join(MEAS_DIR, 'manual_calibration.json')
 
@@ -75,7 +75,7 @@ def visualize_img2ptc_result(
         img = cv2.circle(
             img,
             center=(int(u), int(v)),
-            radius=3,
+            radius=5,
             color=np.array(_cstm_rgba(d)[:3]) * 255,
             thickness=-1)
 
