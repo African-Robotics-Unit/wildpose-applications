@@ -194,7 +194,7 @@ def main():
         )
 
     # filter the positions
-    # dfs = median_filter_3d_positions(dfs, filter_size=5)
+    dfs = median_filter_3d_positions(dfs, filter_size=5)
 
     # calculate the precision with stationary individuals
     # ID 4&8
