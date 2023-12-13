@@ -118,7 +118,7 @@ def main():
     data_dir = '/Users/ikuta/Documents/Projects/wildpose-applications/data/springbok_herd2/'
     lidar_dir = os.path.join(data_dir, 'lidar')
     rgb_dir = os.path.join(data_dir, 'sync_rgb')
-    mask_dir = os.path.join(data_dir, 'masks2_fixed')
+    mask_dir = os.path.join(data_dir, 'masks2')
     calib_fpath = os.path.join(data_dir, 'manual_calibration.json')
 
     # load data
