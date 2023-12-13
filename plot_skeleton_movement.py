@@ -314,7 +314,7 @@ def main():
                     y=[joint_3d_coords[start_joint][1], joint_3d_coords[end_joint][1]],
                     z=[joint_3d_coords[start_joint][2], joint_3d_coords[end_joint][2]],
                     mode='lines',
-                    line=dict(width=2, color='blue')  # Customize the color as needed
+                    line=dict(width=3, color='blue')  # Customize the color as needed
                 )
                 fig.add_trace(bone_line)
 
@@ -322,19 +322,18 @@ def main():
         x_pos_margin += FRAME_MARGIN
 
     fig.update_layout(
-        # font_family='sans-serif',
         font_family='Arial',
+        font_size=16,
         scene=dict(
-            xaxis=dict(title='x (m)', ticks='outside'),
+            xaxis=dict(title='x (m)', ticks='outside', tickangle=0),
             yaxis=dict(title='y (m)', ticks='outside'),
             zaxis=dict(title='Depth (m)', ticks='outside'),
             aspectmode='data'  # Ensures equal aspect ratio
         ),
-        # width=1200,
-        # height=480
     )
 
     fig.show()
+    # fig.write_html("results/test.html", include_mathjax='cdn')
 
 
 if __name__ == '__main__':
