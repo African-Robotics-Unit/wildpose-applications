@@ -323,12 +323,12 @@ def main():
 
     fig.update_layout(
         font_family='Arial',
-        font_size=16,
+        font_size=14,
         scene=dict(
-            xaxis=dict(title='x (m)', ticks='outside', tickangle=0),
-            yaxis=dict(title='y (m)', ticks='outside'),
-            zaxis=dict(title='Depth (m)', ticks='outside'),
-            aspectmode='data'  # Ensures equal aspect ratio
+            xaxis=dict(title='x (m)', ticks='outside', tickangle=0, backgroundcolor='rgb(230, 230, 230)'),
+            yaxis=dict(title='y (m)', ticks='outside', backgroundcolor='rgb(230, 230, 230)'),
+            zaxis=dict(title='Depth (m)', ticks='outside', backgroundcolor='rgb(230, 230, 230)'),
+            aspectmode='data',
         ),
     )
 
