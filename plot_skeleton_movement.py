@@ -321,16 +321,26 @@ def main():
         # increase the margin
         x_pos_margin += FRAME_MARGIN
 
+    def _axis_dict(title):
+        return dict(
+            title=title,
+            ticks='outside',
+            tickangle=0,
+            backgroundcolor='rgb(230, 230, 230)',
+            tickformat='.1f',
+        )
+
     fig.update_layout(
         font_family='Arial',
         font_size=14,
         scene=dict(
-            xaxis=dict(title='x (m)', ticks='outside', tickangle=0, backgroundcolor='rgb(230, 230, 230)'),
-            yaxis=dict(title='y (m)', ticks='outside', backgroundcolor='rgb(230, 230, 230)'),
-            zaxis=dict(title='Depth (m)', ticks='outside', backgroundcolor='rgb(230, 230, 230)'),
+            xaxis=_axis_dict('x (m)'),
+            yaxis=_axis_dict('y (m)'),
+            zaxis=_axis_dict('Depth (m)'),
             aspectmode='data',
         ),
     )
+    # fig.layout.scene.camera.projection.type = "orthographic"
 
     fig.show()
     # fig.write_html("results/test.html", include_mathjax='cdn')
