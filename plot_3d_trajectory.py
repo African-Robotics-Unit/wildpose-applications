@@ -12,6 +12,7 @@ import matplotlib
 import matplotlib.pyplot as plt
 from matplotlib.pyplot import figure
 import scienceplots
+import plotly.graph_objs as go
 
 from utils.file_loader import load_camera_parameters, load_rgb_img, load_pcd
 from utils.camera import make_intrinsic_mat, make_extrinsic_mat
@@ -21,16 +22,6 @@ from projection_functions import extract_rgb_from_image
 from config import COLORS, colors_indices
 
 from projection_functions import closest_point
-
-
-# plt.style.use(['science', 'nature', 'no-latex'])
-# figure(figsize=(10, 6))
-matplotlib.rc('font', family='sans-serif')
-matplotlib.rc('font', serif='Arial')
-plt.rcParams.update({
-    'legend.frameon': False,
-    "pdf.fonttype": 42,
-})
 
 
 IMG_WIDTH, IMG_HEIGHT = 1280,720
@@ -207,38 +198,65 @@ def main():
     print(f'total precision: {total_precision}')
 
     # plot the data
-    ax = plt.figure(layout='constrained').add_subplot(projection='3d')
+    fig = go.Figure()
     for k, v in dfs.items():
         # define color
         rgb = COLORS[colors_indices[int(k)]]['color']
-        norm_rgb = [x / 255. for x in rgb]
+        norm_rgb = [int(x / 255.) for x in rgb]
         # plot
-        ax.plot(
-            v['x'], v['z'], v['time'] - timestamp0,
-            linewidth=1,
-            label=int(k), color=norm_rgb
+        plot_line = go.Scatter3d(
+            x=v['x'],
+            y=v['z'],
+            z=v['time'] - timestamp0,
+            name=str(k),
+            mode='lines',
+            line=dict(
+                width=6 if k in [6, 7] else 3,
+                color=f'rgb({rgb[0]}, {rgb[1]}, {rgb[2]})'
+            )
         )
-    # for k, v in dfs.items():
-    #     if k=='06' or k=='07':
-    #         # define color
-    #         rgb = COLORS[colors_indices[int(k)]]['color']
-    #         norm_rgb = [x / 255. for x in rgb]
-    #         # plot
-    #         ax.plot(
-    #             v['x'], v['z'], time,
-    #             linewidth=3 if k=='06' or k=='07' else 1,
-    #             label=k, color=norm_rgb
-    #         )
-    ax.legend()
-    # ax.set_box_aspect([1.0, 1.0, 1.0])
-    ax.set_xticks(np.arange(-6, 5, 2), minor=False)
-    ax.set_yticks(np.arange(110, 170, 10), minor=False)
-    ax.set_zticks(np.arange(0, 30, 5), minor=False)
-    ax.set_xlabel('x (m)')
-    ax.set_ylabel('z (m)')
-    ax.set_zlabel('Time (s)')
+        fig.add_trace(plot_line)
 
-    plt.show()
+    # add planes
+    xmin = np.min([np.min(v.x) for k, v in dfs.items()])
+    xmax = np.max([np.max(v.x) for k, v in dfs.items()])
+    ymin = np.min([np.min(v.z) for k, v in dfs.items()])
+    ymax = np.max([np.max(v.z) for k, v in dfs.items()])
+    for h in [0, 14]:
+        plane = go.Mesh3d(
+            x=[xmin, xmax, xmin, xmax],
+            y=[ymin, ymin, ymax, ymax],
+            z=[h] * 4,
+            color='rgb(194, 158, 249)',
+            # colorscale=[[x, 'rgb(194, 158, 249)'] for x in [0, 1]],
+            opacity=0.3,
+            showscale=False
+        )
+        fig.add_trace(plane)
+
+    def _axis_dict(title):
+        return dict(
+            title=title,
+            ticks='outside',
+            tickangle=0,
+            backgroundcolor='rgb(230, 230, 230)',
+            tickformat='.1f',
+        )
+
+    fig.update_layout(
+        font_family='Arial',
+        font_size=14,
+        scene=dict(
+            xaxis=_axis_dict('x (m)'),
+            yaxis=_axis_dict('z (m)'),
+            zaxis=_axis_dict('Time (s)'),
+            aspectratio=dict(x=1, y=1, z=0.7),
+        ),
+    )
+    # fig.layout.scene.camera.projection.type = "orthographic"
+
+    fig.show()
+    # fig.write_html("results/test.html", include_mathjax='cdn')
 
 
 if __name__ == '__main__':
