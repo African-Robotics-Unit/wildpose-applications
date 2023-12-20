@@ -10,7 +10,7 @@ import open3d as o3d
 
 import matplotlib.pyplot as plt
 from matplotlib.pyplot import figure
-import scienceplots
+import plotly.graph_objs as go
 
 from utils.file_loader import load_camera_parameters
 from utils.camera import make_intrinsic_mat, make_extrinsic_mat
@@ -233,8 +233,7 @@ def main():
     extrinsic = make_extrinsic_mat(rot_mat, translation)
 
     # prepare the plot
-    ax = plt.figure(figsize=(30,8), tight_layout=True).add_subplot(projection='3d')
-    ax.view_init(elev=-90, azim=-90)
+    fig = go.Figure()
 
     x_pos_margin = 0
     for joint_info in JOINTS:
@@ -277,9 +276,14 @@ def main():
         masked_colors = colors[mask]
 
         # plot the PCD frame
-        ax.scatter(
-            masked_points[:, 0] + x_pos_margin, masked_points[:, 1], masked_points[:, 2],
-            c=masked_colors, s=1)  # s is the size of the points
+        point_cloud_scatter = go.Scatter3d(
+            x=masked_points[:, 0] + x_pos_margin,
+            y=masked_points[:, 1],
+            z=masked_points[:, 2],
+            mode='markers',
+            marker=dict(size=2, color=masked_colors)
+        )
+        fig.add_trace(point_cloud_scatter)
 
         # plot joints and collect 3D coordinates of joints
         joint_3d_coords = {}
@@ -289,12 +293,14 @@ def main():
                 if idx is None:
                     raise 'Error: the axis ranges were too narrow.'
                 joint_3d_coords[joint_name] = pcd_in_cam[idx, :]
-                ax.scatter(
-                    joint_3d_coords[joint_name][0] + x_pos_margin,
-                    joint_3d_coords[joint_name][1],
-                    joint_3d_coords[joint_name][2],
-                    color='r', s=20
+                keypoint_scatter = go.Scatter3d(
+                    x=[joint_3d_coords[joint_name][0] + x_pos_margin],
+                    y=[joint_3d_coords[joint_name][1]],
+                    z=[joint_3d_coords[joint_name][2]],
+                    mode='markers',
+                    marker=dict(size=3, color='red')
                 )
+                fig.add_trace(keypoint_scatter)
                 print(f'{joint_name}: {joint_3d_coords[joint_name]}')
             else:
                 joint_3d_coords[joint_name] = None
@@ -303,22 +309,41 @@ def main():
         for bone in BONES:
             start_joint, end_joint = bone
             if joint_3d_coords[start_joint] is not None and joint_3d_coords[end_joint] is not None:
-                ax.plot(
-                    [joint_3d_coords[start_joint][0] + x_pos_margin, joint_3d_coords[end_joint][0] + x_pos_margin],
-                    [joint_3d_coords[start_joint][1], joint_3d_coords[end_joint][1]],
-                    [joint_3d_coords[start_joint][2], joint_3d_coords[end_joint][2]],
-                    color='blue'  # You can change the color as needed
+                bone_line = go.Scatter3d(
+                    x=[joint_3d_coords[start_joint][0] + x_pos_margin, joint_3d_coords[end_joint][0] + x_pos_margin],
+                    y=[joint_3d_coords[start_joint][1], joint_3d_coords[end_joint][1]],
+                    z=[joint_3d_coords[start_joint][2], joint_3d_coords[end_joint][2]],
+                    mode='lines',
+                    line=dict(width=3, color='blue')  # Customize the color as needed
                 )
+                fig.add_trace(bone_line)
 
         # increase the margin
         x_pos_margin += FRAME_MARGIN
 
-    equal_3d_aspect(ax=ax)
-    ax.set_xlabel('x (m)')
-    ax.set_ylabel('y (m)')
-    ax.set_zlabel('Depth (m)')
+    def _axis_dict(title):
+        return dict(
+            title=title,
+            ticks='outside',
+            tickangle=0,
+            backgroundcolor='rgb(230, 230, 230)',
+            tickformat='.1f',
+        )
 
-    plt.show()
+    fig.update_layout(
+        font_family='Arial',
+        font_size=14,
+        scene=dict(
+            xaxis=_axis_dict('x (m)'),
+            yaxis=_axis_dict('y (m)'),
+            zaxis=_axis_dict('Depth (m)'),
+            aspectmode='data',
+        ),
+    )
+    # fig.layout.scene.camera.projection.type = "orthographic"
+
+    fig.show()
+    # fig.write_html("results/test.html", include_mathjax='cdn')
 
 
 if __name__ == '__main__':
