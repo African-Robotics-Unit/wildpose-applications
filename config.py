@@ -1,7 +1,3 @@
-import numpy as np
-from numpy import linalg as LA
-
-
 COLORS = [
     {"color": [220, 20, 60], "isthing": 1, "id": 1, "name": "person"},
     {"color": [119, 11, 32], "isthing": 1, "id": 2, "name": "bicycle"},
@@ -15,8 +11,7 @@ COLORS = [
     {"color": [250, 170, 30], "isthing": 1, "id": 10, "name": "traffic light"},
     {"color": [100, 170, 30], "isthing": 1, "id": 11, "name": "fire hydrant"},
     {"color": [220, 220, 0], "isthing": 1, "id": 13, "name": "stop sign"},
-    {"color": [175, 116, 175], "isthing": 1,
-        "id": 14, "name": "parking meter"},
+    {"color": [175, 116, 175], "isthing": 1, "id": 14, "name": "parking meter"},
     {"color": [250, 0, 30], "isthing": 1, "id": 15, "name": "bench"},
     {"color": [165, 42, 42], "isthing": 1, "id": 16, "name": "bird"},
     {"color": [255, 77, 255], "isthing": 1, "id": 17, "name": "cat"},
@@ -42,8 +37,7 @@ COLORS = [
     {"color": [45, 89, 255], "isthing": 1, "id": 40, "name": "baseball glove"},
     {"color": [134, 134, 103], "isthing": 1, "id": 41, "name": "skateboard"},
     {"color": [145, 148, 174], "isthing": 1, "id": 42, "name": "surfboard"},
-    {"color": [255, 208, 186], "isthing": 1,
-        "id": 43, "name": "tennis racket"},
+    {"color": [255, 208, 186], "isthing": 1, "id": 43, "name": "tennis racket"},
     {"color": [197, 226, 255], "isthing": 1, "id": 44, "name": "bottle"},
     {"color": [171, 134, 1], "isthing": 1, "id": 46, "name": "wine glass"},
     {"color": [109, 63, 54], "isthing": 1, "id": 47, "name": "cup"},
@@ -102,8 +96,7 @@ COLORS = [
     {"color": [193, 0, 92], "isthing": 0, "id": 138, "name": "net"},
     {"color": [76, 91, 113], "isthing": 0, "id": 141, "name": "pillow"},
     {"color": [255, 180, 195], "isthing": 0, "id": 144, "name": "platform"},
-    {"color": [106, 154, 176], "isthing": 0,
-        "id": 145, "name": "playingfield"},
+    {"color": [106, 154, 176], "isthing": 0, "id": 145, "name": "playingfield"},
     {"color": [230, 150, 140], "isthing": 0, "id": 147, "name": "railroad"},
     {"color": [60, 143, 255], "isthing": 0, "id": 148, "name": "river"},
     {"color": [128, 64, 128], "isthing": 0, "id": 149, "name": "road"},
@@ -120,212 +113,24 @@ COLORS = [
     {"color": [7, 246, 231], "isthing": 0, "id": 176, "name": "wall-tile"},
     {"color": [107, 255, 200], "isthing": 0, "id": 177, "name": "wall-wood"},
     {"color": [58, 41, 149], "isthing": 0, "id": 178, "name": "water-other"},
-    {"color": [183, 121, 142], "isthing": 0,
-        "id": 180, "name": "window-blind"},
+    {"color": [183, 121, 142], "isthing": 0, "id": 180, "name": "window-blind"},
     {"color": [255, 73, 97], "isthing": 0, "id": 181, "name": "window-other"},
     {"color": [107, 142, 35], "isthing": 0, "id": 184, "name": "tree-merged"},
-    {"color": [190, 153, 153], "isthing": 0,
-        "id": 185, "name": "fence-merged"},
-    {"color": [146, 139, 141], "isthing": 0,
-        "id": 186, "name": "ceiling-merged"},
-    {"color": [70, 130, 180], "isthing": 0,
-        "id": 187, "name": "sky-other-merged"},
-    {"color": [134, 199, 156], "isthing": 0,
-        "id": 188, "name": "cabinet-merged"},
-    {"color": [209, 226, 140], "isthing": 0,
-        "id": 189, "name": "table-merged"},
-    {"color": [96, 36, 108], "isthing": 0,
-        "id": 190, "name": "floor-other-merged"},
-    {"color": [96, 96, 96], "isthing": 0,
-        "id": 191, "name": "pavement-merged"},
-    {"color": [64, 170, 64], "isthing": 0,
-        "id": 192, "name": "mountain-merged"},
-    {"color": [152, 251, 152], "isthing": 0,
-        "id": 193, "name": "grass-merged"},
+    {"color": [190, 153, 153], "isthing": 0, "id": 185, "name": "fence-merged"},
+    {"color": [146, 139, 141], "isthing": 0, "id": 186, "name": "ceiling-merged"},
+    {"color": [70, 130, 180], "isthing": 0, "id": 187, "name": "sky-other-merged"},
+    {"color": [134, 199, 156], "isthing": 0, "id": 188, "name": "cabinet-merged"},
+    {"color": [209, 226, 140], "isthing": 0, "id": 189, "name": "table-merged"},
+    {"color": [96, 36, 108], "isthing": 0, "id": 190, "name": "floor-other-merged"},
+    {"color": [96, 96, 96], "isthing": 0, "id": 191, "name": "pavement-merged"},
+    {"color": [64, 170, 64], "isthing": 0, "id": 192, "name": "mountain-merged"},
+    {"color": [152, 251, 152], "isthing": 0, "id": 193, "name": "grass-merged"},
     {"color": [208, 229, 228], "isthing": 0, "id": 194, "name": "dirt-merged"},
-    {"color": [206, 186, 171], "isthing": 0,
-        "id": 195, "name": "paper-merged"},
-    {"color": [152, 161, 64], "isthing": 0,
-        "id": 196, "name": "food-other-merged"},
-    {"color": [116, 112, 0], "isthing": 0,
-        "id": 197, "name": "building-other-merged"},
+    {"color": [206, 186, 171], "isthing": 0, "id": 195, "name": "paper-merged"},
+    {"color": [152, 161, 64], "isthing": 0, "id": 196, "name": "food-other-merged"},
+    {"color": [116, 112, 0], "isthing": 0, "id": 197, "name": "building-other-merged"},
     {"color": [0, 114, 143], "isthing": 0, "id": 198, "name": "rock-merged"},
-    {"color": [102, 102, 156], "isthing": 0,
-        "id": 199, "name": "wall-other-merged"},
+    {"color": [102, 102, 156], "isthing": 0, "id": 199, "name": "wall-other-merged"},
     {"color": [250, 141, 255], "isthing": 0, "id": 200, "name": "rug-merged"},
 ]
-colors_indices = [0, 5, 10, 15, 20, 25, 30, 35, 13, 45, 50, 55, 60, 65, 70]
-
-
-def extract_rgb_from_image(
-    pcd_in_img, pcd_in_cam, rgb_img, seg_mask, obj_ids, width, height
-):
-
-    valid_mask = \
-        (0 <= pcd_in_img[:, 0]) * (pcd_in_img[:, 0] < width) * \
-        (0 <= pcd_in_img[:, 1]) * (pcd_in_img[:, 1] < height) * \
-        (0 < pcd_in_img[:, 2])
-
-    pixel_locs = np.concatenate(
-        [pcd_in_img[valid_mask, 1][:, None],
-         pcd_in_img[valid_mask, 0][:, None]],
-        axis=1)  # yx
-    pixel_locs = pixel_locs.astype(int)
-    valid_locs = np.where(valid_mask)[0]
-
-    pcd_in_img_valid = pcd_in_img[valid_locs]
-
-    pcd_colors = np.zeros((len(pcd_in_img), 3))
-
-    obj_mask_from_color = np.zeros((len(pcd_in_img_valid)))
-    pcd_colors[valid_mask, :] = rgb_img[pixel_locs[:, 0], pixel_locs[:, 1]] / 255.0
-
-    obj_points = {}
-    for obj_idx in range(len(seg_mask)):
-        obj_id = obj_ids[obj_idx]
-        obj_mask = seg_mask[obj_idx, 0]
-        valid_locs_mask = np.where(
-            obj_mask[pixel_locs[:, 0], pixel_locs[:, 1]])
-
-        obj_points[obj_id] = pcd_in_cam[valid_locs[valid_locs_mask]]
-
-        # get color for the segmentation
-        obj_mask_from_color[valid_locs_mask] = obj_id
-
-    return pcd_colors, valid_mask, obj_points, obj_mask_from_color
-
-
-def extract_rgb_from_image_pure(pcd_in_img, rgb_img, width, height):
-    valid_mask = \
-        (0 <= pcd_in_img[:, 0]) * (pcd_in_img[:, 0] < width) * \
-        (0 <= pcd_in_img[:, 1]) * (pcd_in_img[:, 1] < height) * \
-        (0 < pcd_in_img[:, 2])
-
-    pixel_locs = np.concatenate(
-        [pcd_in_img[valid_mask, 1][:, None],
-         pcd_in_img[valid_mask, 0][:, None]],
-        axis=1)  # yx
-    pixel_locs = pixel_locs.astype(int)
-
-    pcd_colors = np.zeros((len(pcd_in_img), 3))
-    pcd_colors[valid_mask, :] = rgb_img[pixel_locs[:, 0],
-                                        pixel_locs[:, 1]] / 255.0
-
-    return pcd_colors, valid_mask
-
-
-def get_3d_from_2d_point(pcd_in_img, point_2d, z_range):
-    point_2d = np.array(point_2d)
-
-    # Create a mask for points within the specified range
-    mask = (
-        (pcd_in_img[:, 2] >= z_range[0]) & (pcd_in_img[:, 2] <= z_range[1])
-    )
-
-    # Apply mask to pcd_in_img and calculate distances for the remaining points
-    masked_points = pcd_in_img[mask]
-    if masked_points.size == 0:
-        return None, None
-
-    distances = LA.norm(masked_points[:, :2] - point_2d, axis=1)
-    min_dist_idx = np.argmin(distances)
-
-    # Get the original index of the point in pcd_in_img
-    original_indices = np.arange(len(pcd_in_img))
-    pt_idx = original_indices[mask][min_dist_idx]
-
-    return pcd_in_img[pt_idx, :], pt_idx
-
-
-def get_coloured_point_cloud(
-    pcd_on_img, rgb_img, img_seg_mask, obj_dict, width, height
-):
-    """generate the color info of point cloud
-
-    Parameters
-    ----------
-    pcd_on_img : np.ndarray
-        [N, 3]
-    rgb_img : np.ndarray
-        [H, W, 3]
-    img_seg_mask : _type_
-        [O, 1, H, W], where `O` is the number of semantic objects.
-    obj_dict : _type_
-        _description_
-    width : _type_
-        _description_
-    height : _type_
-        _description_
-
-    Returns
-    -------
-    pcd_colors :
-        [N, 3]
-    valid_mask :
-        indicates if each 3D points are on the image. [N,]
-    pcd_mask :
-        shows the segmentation labels of 3D points. The default value is -1.
-    pcd_seg_mask :
-        shows the object labels of 3D points in the image frame.
-        The shape is [M,], where `M` is the number of 3D points in the image.
-    """
-    num_pts = pcd_on_img.shape[0]
-    num_objs = img_seg_mask.shape[0]
-    valid_pcd_mask = \
-        (0 <= pcd_on_img[:, 0]) * (pcd_on_img[:, 0] < width) * \
-        (0 <= pcd_on_img[:, 1]) * (pcd_on_img[:, 1] < height) * \
-        (0 < pcd_on_img[:, 2])  # [N,]
-    # the indices of the valid 3d points
-    valid_pt_locs = np.where(valid_pcd_mask)[0]  # [M,]
-    num_pts_in_img = valid_pt_locs.shape[0]
-
-    pixel_locs = np.concatenate(
-        [pcd_on_img[valid_pcd_mask, 1][:, None],
-         pcd_on_img[valid_pcd_mask, 0][:, None]],
-        axis=1)  # [M, yx]
-    pixel_locs = pixel_locs.astype(int)  # [M, 2]
-
-    # get the image color info
-    pcd_colors = np.zeros((len(pcd_on_img), 3))
-    pcd_colors[valid_pcd_mask, :] = rgb_img[pixel_locs[:, 0],
-                                            pixel_locs[:, 1]] / 255.0
-
-    # get the segmentation info
-    pcd_seg_mask = np.zeros(num_pts_in_img)  # [M,]
-    pcd_seg = -np.ones(num_pts)  # default ID is -1
-    for obj_idx in range(num_objs):
-        _, obj_id = obj_dict[obj_idx]
-        obj_mask = img_seg_mask[obj_idx, 0, :, :]   # [H, W]
-        valid_pt_locs_mask = np.where(
-            obj_mask[pixel_locs[:, 0], pixel_locs[:, 1]])
-        pcd_seg_mask[valid_pt_locs_mask] = obj_id
-        pcd_seg[valid_pt_locs[valid_pt_locs_mask]] = obj_id
-
-    return pcd_colors, valid_pcd_mask, pcd_seg, pcd_seg_mask
-
-
-def closest_point(target, point_cloud_2d):
-    """
-    Find the closest point to the target point from a 2D point cloud.
-
-    Parameters:
-    - target (np.array): A numpy array of shape [1, 2] representing the target point.
-    - point_cloud_2d (np.array): A numpy array of shape [N, 2] representing the 2D point cloud.
-
-    Returns:
-    - closest_pt (np.array): The closest point in the point cloud to the target.
-    - min_distance (float): The distance between the closest point and the target.
-    """
-    # Calculate the squared Euclidean distances
-    squared_distances = np.sum((point_cloud_2d - target)**2, axis=1)
-
-    # Find the index of the minimum distance
-    min_index = np.argmin(squared_distances)
-
-    # Retrieve the closest point
-    closest_2dpt = point_cloud_2d[min_index]
-
-    # Calculate the minimum distance (Euclidean)
-    min_distance = np.sqrt(squared_distances[min_index])
-
-    return closest_2dpt, min_index
+colors_indices = [0,5,10,15,20,25,30,35,13,45,50,55,60,65,70,3,7,11,13,18,19,33,34,37,39]

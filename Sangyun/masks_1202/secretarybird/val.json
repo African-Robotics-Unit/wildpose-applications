@@ -1,0 +1,28 @@
+{
+    "annotations": [
+    ],
+    "categories": [
+        {
+            "id": 1,
+            "name": "1",
+            "supercategory": "1"
+        }
+    ],
+    "images": [
+    ],
+    "info": {
+        "contributor": "Contributor",
+        "date_created": "2023-09-15",
+        "description": "Description",
+        "url": "",
+        "version": "1",
+        "year": 2023
+    },
+    "license": [
+        {
+            "id": 0,
+            "name": "",
+            "url": ""
+        }
+    ]
+}

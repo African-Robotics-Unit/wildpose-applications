@@ -1,6 +1,25 @@
+import cv2
 import numpy as np
-from numpy import linalg as LA
+import open3d as o3d
+import quaternion
+import glob
+import os
+import json
+from tqdm import tqdm
 
+from utils.file_loader import load_camera_parameters
+from projection_functions import extract_rgb_from_image_pure
+from utils.camera import make_intrinsic_mat, make_extrinsic_mat
+
+
+CONFIG = {
+    "scene_dir": "data/martial_eagle_stand",
+    "pcd_dir": "data/martial_eagle_stand/lidar",
+    "sync_rgb_dir": "data/martial_eagle_stand/sync_rgb",
+    'texture_img_fpath': 'data/martial_eagle_stand/texture.jpeg',
+    "textured_pcd_dir": "data/martial_eagle_stand/textured_pcds",
+}
+IMG_WIDTH, IMG_HEIGHT = 1280, 720
 
 COLORS = [
     {"color": [220, 20, 60], "isthing": 1, "id": 1, "name": "person"},
@@ -154,178 +173,190 @@ COLORS = [
         "id": 199, "name": "wall-other-merged"},
     {"color": [250, 141, 255], "isthing": 0, "id": 200, "name": "rug-merged"},
 ]
-colors_indices = [0, 5, 10, 15, 20, 25, 30, 35, 13, 45, 50, 55, 60, 65, 70]
+colors_indice = [0, 5, 10, 15, 20, 25, 30, 35, 13, 45, 50, 55, 60, 65, 70]
 
 
-def extract_rgb_from_image(
-    pcd_in_img, pcd_in_cam, rgb_img, seg_mask, obj_ids, width, height
-):
+def lidar2cam_projection(pcd, extrinsic):
+    tmp = np.insert(pcd, 3, 1, axis=1).T
+    tmp = np.delete(tmp, np.where(tmp[0, :] < 0), axis=1)
+    pcd_in_cam = extrinsic.dot(tmp)
 
-    valid_mask = \
-        (0 <= pcd_in_img[:, 0]) * (pcd_in_img[:, 0] < width) * \
-        (0 <= pcd_in_img[:, 1]) * (pcd_in_img[:, 1] < height) * \
-        (0 < pcd_in_img[:, 2])
-
-    pixel_locs = np.concatenate(
-        [pcd_in_img[valid_mask, 1][:, None],
-         pcd_in_img[valid_mask, 0][:, None]],
-        axis=1)  # yx
-    pixel_locs = pixel_locs.astype(int)
-    valid_locs = np.where(valid_mask)[0]
-
-    pcd_in_img_valid = pcd_in_img[valid_locs]
-
-    pcd_colors = np.zeros((len(pcd_in_img), 3))
-
-    obj_mask_from_color = np.zeros((len(pcd_in_img_valid)))
-    pcd_colors[valid_mask, :] = rgb_img[pixel_locs[:, 0], pixel_locs[:, 1]] / 255.0
-
-    obj_points = {}
-    for obj_idx in range(len(seg_mask)):
-        obj_id = obj_ids[obj_idx]
-        obj_mask = seg_mask[obj_idx, 0]
-        valid_locs_mask = np.where(
-            obj_mask[pixel_locs[:, 0], pixel_locs[:, 1]])
-
-        obj_points[obj_id] = pcd_in_cam[valid_locs[valid_locs_mask]]
-
-        # get color for the segmentation
-        obj_mask_from_color[valid_locs_mask] = obj_id
-
-    return pcd_colors, valid_mask, obj_points, obj_mask_from_color
+    return pcd_in_cam
 
 
-def extract_rgb_from_image_pure(pcd_in_img, rgb_img, width, height):
-    valid_mask = \
-        (0 <= pcd_in_img[:, 0]) * (pcd_in_img[:, 0] < width) * \
-        (0 <= pcd_in_img[:, 1]) * (pcd_in_img[:, 1] < height) * \
-        (0 < pcd_in_img[:, 2])
+def cam2image_projection(pcd_in_cam, intrinsic):
+    pcd_in_image = intrinsic.dot(pcd_in_cam)
+    pcd_in_image[:2] /= pcd_in_image[2, :]
 
-    pixel_locs = np.concatenate(
-        [pcd_in_img[valid_mask, 1][:, None],
-         pcd_in_img[valid_mask, 0][:, None]],
-        axis=1)  # yx
-    pixel_locs = pixel_locs.astype(int)
-
-    pcd_colors = np.zeros((len(pcd_in_img), 3))
-    pcd_colors[valid_mask, :] = rgb_img[pixel_locs[:, 0],
-                                        pixel_locs[:, 1]] / 255.0
-
-    return pcd_colors, valid_mask
+    return pcd_in_image
 
 
-def get_3d_from_2d_point(pcd_in_img, point_2d, z_range):
-    point_2d = np.array(point_2d)
+def sync_lidar_and_rgb(lidar_dir, rgb_dir):
+    rgb_fpaths = sorted(glob.glob(os.path.join(rgb_dir, '*.jpeg')))
+    lidar_fpaths = sorted(glob.glob(os.path.join(lidar_dir, '*.pcd')))
 
-    # Create a mask for points within the specified range
-    mask = (
-        (pcd_in_img[:, 2] >= z_range[0]) & (pcd_in_img[:, 2] <= z_range[1])
-    )
+    rgb_list = []
+    lidar_list = []
 
-    # Apply mask to pcd_in_img and calculate distances for the remaining points
-    masked_points = pcd_in_img[mask]
-    if masked_points.size == 0:
-        return None, None
+    for rgb_fpath in rgb_fpaths:
+        rgb_filename = os.path.basename(rgb_fpath).split('.')[0]
+        second_rgb, decimal_rgb = rgb_filename.split('_')[1:3]
 
-    distances = LA.norm(masked_points[:, :2] - point_2d, axis=1)
-    min_dist_idx = np.argmin(distances)
+        second_rgb = int(second_rgb)
+        decimal_rgb = float('0.' + decimal_rgb)
+        rgb_timestamp = second_rgb + decimal_rgb
 
-    # Get the original index of the point in pcd_in_img
-    original_indices = np.arange(len(pcd_in_img))
-    pt_idx = original_indices[mask][min_dist_idx]
+        diff_list = []
+        lidar_fp_list = []
+        for lidar_fpath in lidar_fpaths:
+            lidar_filename = os.path.basename(lidar_fpath).split('.')[0]
+            _, _, second_lidar, decimal_lidar = lidar_filename.split('_')
+            second_lidar = int(second_lidar)
+            decimal_lidar = float('0.' + decimal_lidar)
 
-    return pcd_in_img[pt_idx, :], pt_idx
+            lidar_timestamp = second_lidar + decimal_lidar
+            diff = abs(rgb_timestamp - lidar_timestamp)
 
+            diff_list.append(diff)
+            lidar_fp_list.append(lidar_fpath)
 
-def get_coloured_point_cloud(
-    pcd_on_img, rgb_img, img_seg_mask, obj_dict, width, height
-):
-    """generate the color info of point cloud
+        diff_list = np.array(diff_list)
+        matching_lidar_file = lidar_fp_list[np.argmin(diff_list)]
 
-    Parameters
-    ----------
-    pcd_on_img : np.ndarray
-        [N, 3]
-    rgb_img : np.ndarray
-        [H, W, 3]
-    img_seg_mask : _type_
-        [O, 1, H, W], where `O` is the number of semantic objects.
-    obj_dict : _type_
-        _description_
-    width : _type_
-        _description_
-    height : _type_
-        _description_
+        rgb_list.append(rgb_fpath)
+        assert os.path.exists(matching_lidar_file)
+        lidar_list.append(matching_lidar_file)
 
-    Returns
-    -------
-    pcd_colors :
-        [N, 3]
-    valid_mask :
-        indicates if each 3D points are on the image. [N,]
-    pcd_mask :
-        shows the segmentation labels of 3D points. The default value is -1.
-    pcd_seg_mask :
-        shows the object labels of 3D points in the image frame.
-        The shape is [M,], where `M` is the number of 3D points in the image.
-    """
-    num_pts = pcd_on_img.shape[0]
-    num_objs = img_seg_mask.shape[0]
-    valid_pcd_mask = \
-        (0 <= pcd_on_img[:, 0]) * (pcd_on_img[:, 0] < width) * \
-        (0 <= pcd_on_img[:, 1]) * (pcd_on_img[:, 1] < height) * \
-        (0 < pcd_on_img[:, 2])  # [N,]
-    # the indices of the valid 3d points
-    valid_pt_locs = np.where(valid_pcd_mask)[0]  # [M,]
-    num_pts_in_img = valid_pt_locs.shape[0]
-
-    pixel_locs = np.concatenate(
-        [pcd_on_img[valid_pcd_mask, 1][:, None],
-         pcd_on_img[valid_pcd_mask, 0][:, None]],
-        axis=1)  # [M, yx]
-    pixel_locs = pixel_locs.astype(int)  # [M, 2]
-
-    # get the image color info
-    pcd_colors = np.zeros((len(pcd_on_img), 3))
-    pcd_colors[valid_pcd_mask, :] = rgb_img[pixel_locs[:, 0],
-                                            pixel_locs[:, 1]] / 255.0
-
-    # get the segmentation info
-    pcd_seg_mask = np.zeros(num_pts_in_img)  # [M,]
-    pcd_seg = -np.ones(num_pts)  # default ID is -1
-    for obj_idx in range(num_objs):
-        _, obj_id = obj_dict[obj_idx]
-        obj_mask = img_seg_mask[obj_idx, 0, :, :]   # [H, W]
-        valid_pt_locs_mask = np.where(
-            obj_mask[pixel_locs[:, 0], pixel_locs[:, 1]])
-        pcd_seg_mask[valid_pt_locs_mask] = obj_id
-        pcd_seg[valid_pt_locs[valid_pt_locs_mask]] = obj_id
-
-    return pcd_colors, valid_pcd_mask, pcd_seg, pcd_seg_mask
+    return lidar_list, rgb_list
 
 
-def closest_point(target, point_cloud_2d):
-    """
-    Find the closest point to the target point from a 2D point cloud.
+def get_2D_gt(gt_json_path):
 
-    Parameters:
-    - target (np.array): A numpy array of shape [1, 2] representing the target point.
-    - point_cloud_2d (np.array): A numpy array of shape [N, 2] representing the 2D point cloud.
+    gt_json = json.load(open(gt_json_path, 'r'))
+    img_dict = {}
 
-    Returns:
-    - closest_pt (np.array): The closest point in the point cloud to the target.
-    - min_distance (float): The distance between the closest point and the target.
-    """
-    # Calculate the squared Euclidean distances
-    squared_distances = np.sum((point_cloud_2d - target)**2, axis=1)
+    annotations = gt_json['annotations']
+    images = gt_json['images']
 
-    # Find the index of the minimum distance
-    min_index = np.argmin(squared_distances)
+    for idx in range(len(annotations)):
 
-    # Retrieve the closest point
-    closest_2dpt = point_cloud_2d[min_index]
+        anno = annotations[idx]
+        bbox = anno['bbox']
+        img_id = anno['image_id']
+        obj_id = anno['category_id']
+        img_filename = os.path.basename(images[img_id]['file_name'])
 
-    # Calculate the minimum distance (Euclidean)
-    min_distance = np.sqrt(squared_distances[min_index])
+        if img_filename not in img_dict:
+            img_dict[img_filename] = []
+        img_dict[img_filename].append([bbox, obj_id])
+    return img_dict
 
-    return closest_2dpt, min_index
+
+def load_rgb_img(fpath: str):
+    bgr_img = cv2.imread(fpath)
+    rgb_img = cv2.cvtColor(bgr_img, cv2.COLOR_BGR2RGB)
+    return rgb_img
+
+
+def main(accumulation=False):
+    # arguments
+    data_dir = CONFIG['scene_dir']
+    lidar_dir = CONFIG['pcd_dir']
+    rgb_dir = CONFIG['sync_rgb_dir']
+    texture_img_fpath = CONFIG['texture_img_fpath']
+    calib_fpath = os.path.join(data_dir, 'manual_calibration.json')
+    output_dir = CONFIG['textured_pcd_dir']
+
+    fx, fy, cx, cy, rot_mat, translation = load_camera_parameters(calib_fpath)
+
+    if accumulation:
+        # load the texture image
+        lidar_list = sorted(glob.glob(os.path.join(lidar_dir, '*.pcd')))
+        rgb_img = load_rgb_img(texture_img_fpath)
+
+        # accumulate all the point cloud
+        accumulated_pcd_in_lidar = None
+        for pcd_fpath in lidar_list:
+            pcd_in_lidar = o3d.io.read_point_cloud(pcd_fpath)
+            pcd_points = np.asarray(pcd_in_lidar.points)  # [N, 3]
+
+            if accumulated_pcd_in_lidar is None:
+                accumulated_pcd_in_lidar = pcd_points
+            else:
+                accumulated_pcd_in_lidar = np.vstack((accumulated_pcd_in_lidar, pcd_points))
+
+
+        # load the camera parameters
+        intrinsic = make_intrinsic_mat(fx, fy, cx, cy)
+        extrinsic = make_extrinsic_mat(rot_mat, translation)
+
+        # project the point cloud to camera and its image sensor
+        pcd_in_cam = lidar2cam_projection(accumulated_pcd_in_lidar, extrinsic)
+        pcd_in_img = cam2image_projection(pcd_in_cam, intrinsic)
+        pcd_in_cam = pcd_in_cam.T[:, :-1]
+        pcd_in_img = pcd_in_img.T[:, :-1]
+
+        pcd_colors, valid_mask_save = extract_rgb_from_image_pure(
+            pcd_in_img, rgb_img, width=IMG_WIDTH, height=IMG_HEIGHT)
+        pcd_with_rgb = np.concatenate([pcd_in_cam, pcd_colors], 1)
+        pcd_with_rgb = pcd_with_rgb[valid_mask_save]  # [N, 6]
+        textured_pcd = o3d.geometry.PointCloud()
+        textured_pcd.points = o3d.utility.Vector3dVector(
+            pcd_with_rgb[:, :3])
+        textured_pcd.colors = o3d.utility.Vector3dVector(
+            pcd_with_rgb[:, 3:])
+
+        # visualize
+        vis = o3d.visualization.VisualizerWithKeyCallback()
+        vis.create_window()
+        vis.add_geometry(textured_pcd)
+        opt = vis.get_render_option()
+        opt.show_coordinate_frame = True
+        opt.background_color = np.asarray([0.7, 0.7, 0.7])
+        vis.poll_events()
+        vis.run()
+        vis.destroy_window()
+
+        o3d.io.write_point_cloud(
+            os.path.join(output_dir, 'coloured_accumulation.pcd'),
+            textured_pcd)
+    else:
+        lidar_list, rgb_list = sync_lidar_and_rgb(lidar_dir, rgb_dir)
+        for idx in tqdm(range(len(rgb_list))):
+            # load the frame image
+            rgb_fpath = rgb_list[idx]
+            rgb_img = load_rgb_img(rgb_fpath)
+            # load point cloud of the frame
+            lidar_path = lidar_list[idx]
+            pcd_in_lidar = o3d.io.read_point_cloud(lidar_path)
+            pcd_in_lidar = np.asarray(pcd_in_lidar.points)
+
+            # load the camera parameters
+            intrinsic = make_intrinsic(fx, fy, cx, cy)
+            extrinsic = make_extrinsic(rot_mat, translation)
+
+            # project the point cloud to camera and its image sensor
+            pcd_in_cam = lidar2cam_projection(pcd_in_lidar, extrinsic)
+            pcd_in_img = cam2image_projection(pcd_in_cam, intrinsic)
+
+            pcd_in_cam = pcd_in_cam.T[:, :-1]
+            pcd_in_img = pcd_in_img.T[:, :-1]
+
+            pcd_colors, valid_mask_save = extract_rgb_from_image_pure(
+                pcd_in_img, rgb_img, width=IMG_WIDTH, height=IMG_HEIGHT)
+            pcd_with_rgb_save = np.concatenate([pcd_in_cam, pcd_colors], 1)
+            pcd_with_rgb_save = pcd_with_rgb_save[valid_mask_save]  # [N, 6]
+            textured_pcd = o3d.geometry.PointCloud()
+            textured_pcd.points = o3d.utility.Vector3dVector(
+                pcd_with_rgb_save[:, :3])
+            textured_pcd.colors = o3d.utility.Vector3dVector(
+                pcd_with_rgb_save[:, 3:])
+
+            file_prefix = rgb_fpath.split('/')[-1].split('.')[0]
+            o3d.io.write_point_cloud(
+                os.path.join(output_dir, file_prefix + '.pcd'),
+                textured_pcd)
+
+
+if __name__ == '__main__':
+    main(accumulation=True)
