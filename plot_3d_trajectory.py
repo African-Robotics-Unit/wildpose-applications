@@ -106,7 +106,7 @@ def calculate_precision(positions_3d):
 
 
 def main():
-    data_dir = '/Users/ikuta/Documents/Projects/wildpose-applications/data/springbok_herd2/'
+    data_dir = '/Users/ikuta/Documents/Projects/PhD/wildpose-applications/data/springbok_herd2/'
     lidar_dir = os.path.join(data_dir, 'lidar')
     rgb_dir = os.path.join(data_dir, 'sync_rgb')
     mask_dir = os.path.join(data_dir, 'masks2')
@@ -217,22 +217,22 @@ def main():
         )
         fig.add_trace(plot_line)
 
-    # add planes
-    xmin = np.min([np.min(v.x) for k, v in dfs.items()])
-    xmax = np.max([np.max(v.x) for k, v in dfs.items()])
-    ymin = np.min([np.min(v.z) for k, v in dfs.items()])
-    ymax = np.max([np.max(v.z) for k, v in dfs.items()])
-    for h in [0, 14]:
-        plane = go.Mesh3d(
-            x=[xmin, xmax, xmin, xmax],
-            y=[ymin, ymin, ymax, ymax],
-            z=[h] * 4,
-            color='rgb(194, 158, 249)',
-            # colorscale=[[x, 'rgb(194, 158, 249)'] for x in [0, 1]],
-            opacity=0.3,
-            showscale=False
-        )
-        fig.add_trace(plane)
+    # # add planes
+    # xmin = np.min([np.min(v.x) for k, v in dfs.items()])
+    # xmax = np.max([np.max(v.x) for k, v in dfs.items()])
+    # ymin = np.min([np.min(v.z) for k, v in dfs.items()])
+    # ymax = np.max([np.max(v.z) for k, v in dfs.items()])
+    # for h in [0, 14]:
+    #     plane = go.Mesh3d(
+    #         x=[xmin, xmax, xmin, xmax],
+    #         y=[ymin, ymin, ymax, ymax],
+    #         z=[h] * 4,
+    #         color='rgb(194, 158, 249)',
+    #         # colorscale=[[x, 'rgb(194, 158, 249)'] for x in [0, 1]],
+    #         opacity=0.3,
+    #         showscale=False
+    #     )
+    #     fig.add_trace(plane)
 
     def _axis_dict(title):
         return dict(
