@@ -27,7 +27,7 @@ def get_position(timestamp, pos_df):
 
 
 def main():
-    data_dir = '/Users/ikuta/Documents/Projects/wildpose-applications/data/springbok_herd2/'
+    data_dir = './data/springbok_herd2/'
 
     # load lidar timestamp
     csv_fpath = os.path.join(data_dir, 'trajectory_raw', 'lidar_frames.csv')

@@ -5,11 +5,11 @@ import open3d as o3d
 
 
 def main():
-    pcd_fpath = '/Users/ikuta/Documents/Projects/wildpose-self-calibrator/data/martial_eagle_stand/textured_pcds/coloured_accumulation.pcd'
+    pcd_fpath = './data/martial_eagle_stand/textured_pcds/coloured_accumulation.pcd'
     xlim = (-100, 100)
     ylim = (-100, 100)
     zlim = (18, 19)
-    # pcd_fpath = '/Users/ikuta/Documents/Projects/wildpose-self-calibrator/data/giraffe_stand/textured_pcds/coloured_accumulation.pcd'
+    # pcd_fpath = './data/giraffe_stand/textured_pcds/coloured_accumulation.pcd'
     # xlim = (-100, 100)
     # ylim = (-100, 100)
     # zlim = (85, 95)
