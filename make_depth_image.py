@@ -21,7 +21,7 @@ plt.rcParams.update({
     "pdf.fonttype": 42,
 })
 
-MEAS_DIR = '/Users/ikuta/Documents/Projects/wildpose-self-calibrator/data/red_hartebeest_stand'
+MEAS_DIR = './data/red_hartebeest_stand'
 PCD_FPATH = os.path.join(
     MEAS_DIR, 'lidar',
     'livox_frame_1670832407_462632296.pcd'
