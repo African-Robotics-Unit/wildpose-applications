@@ -28,11 +28,7 @@ def equal_3d_aspect(ax):
 
 
 def main():
-    # pcd_fpath = '/Users/ikuta/Documents/Projects/wildpose-self-calibrator/data/giraffe_stand/textured_pcds/coloured_accumulation.pcd'
-    # xlim = (-100, 100)
-    # ylim = (-100, 100)
-    # zlim = (85, 95)
-    pcd_fpath = '/Users/ikuta/Documents/Projects/wildpose-self-calibrator/data/martial_eagle_stand/textured_pcds/coloured_accumulation.pcd'
+    pcd_fpath = './data/martial_eagle_stand/textured_pcds/coloured_accumulation.pcd'
     xlim = (-100, -0.1)
     ylim = (-100, 100)
     zlim = (18.6, 18.9)
