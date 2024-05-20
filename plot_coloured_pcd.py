@@ -28,14 +28,10 @@ def equal_3d_aspect(ax):
 
 
 def main():
-    # pcd_fpath = '/Users/ikuta/Documents/Projects/wildpose-self-calibrator/data/giraffe_stand/textured_pcds/coloured_accumulation.pcd'
-    # xlim = (-100, 100)
-    # ylim = (-100, 100)
-    # zlim = (85, 95)
-    pcd_fpath = '/Users/ikuta/Documents/Projects/wildpose-self-calibrator/data/martial_eagle_stand/textured_pcds/coloured_accumulation.pcd'
-    xlim = (-100, -0.1)
-    ylim = (-100, 100)
-    zlim = (18.6, 18.9)
+    pcd_fpath = './data/calibration/livox_frame_1675521461_933804176.pcd'
+    xlim = None # (-100, -0.1)
+    ylim = None # (-100, 100)
+    zlim = None # (18.6, 18.9)
 
     # load data
     pcd = o3d.io.read_point_cloud(pcd_fpath)
@@ -43,13 +39,17 @@ def main():
     colors = np.asarray(pcd.colors)  # [N, 3]
 
     # make the mask
-    mask = (
-        (xlim[0] < points[:, 0]) & (points[:, 0] < xlim[1]) &
-        (ylim[0] < points[:, 1]) & (points[:, 1] < ylim[1]) &
-        (zlim[0] < points[:, 2]) & (points[:, 2] < zlim[1])
-    )
-    masked_points = points[mask]
-    masked_colors = colors[mask]
+    if xlim is not None:
+        mask = (
+            (xlim[0] < points[:, 0]) & (points[:, 0] < xlim[1]) &
+            (ylim[0] < points[:, 1]) & (points[:, 1] < ylim[1]) &
+            (zlim[0] < points[:, 2]) & (points[:, 2] < zlim[1])
+        )
+        masked_points = points[mask]
+        masked_colors = colors[mask]
+    else:
+        masked_points = points
+        masked_colors = colors
 
     # plot the data
     fig = go.Figure()
@@ -58,7 +58,10 @@ def main():
         y=masked_points[:, 1],
         z=masked_points[:, 2],
         mode='markers',
-        marker=dict(size=2, color=masked_colors)
+        marker=dict(
+            size=2,
+            color=masked_colors if len(masked_colors) > 0 else None
+        )
     )
     fig.add_trace(point_cloud_scatter)
 

@@ -8,7 +8,7 @@ from utils import camera as camera_utils
 from projection_functions import closest_point
 
 
-ECAL_FOLDER = '/Users/ikuta/Documents/Projects/wildpose-self-calibrator/data/martial_eagle_stand'
+ECAL_FOLDER = './data/martial_eagle_stand'
 CAMERA_PARAM_FILENAME = 'manual_calibration.json'
 X_RANGE = [18, 19]
 Y_RANGE = [0, 1]

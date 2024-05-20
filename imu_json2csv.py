@@ -8,7 +8,7 @@ from utils.format_conversion import get_timestamp_from_pcd_fpath
 
 
 def main():
-    data_dir = '/Users/ikuta/Documents/Projects/wildpose-applications/data/springbok_herd2/'
+    data_dir = './data/springbok_herd2/'
 
     # load data
     lidar_fpaths = sorted(glob.glob(os.path.join(data_dir, 'lidar', '*.pcd')))
