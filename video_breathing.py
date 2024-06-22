@@ -87,7 +87,8 @@ def main():
     y_filtered = filtfilt(b, a, uniform_ys)
 
     # show the filtered plot
-    normalized_y_filtered = normalize_data(np.array(y_filtered))
+    # normalized_y_filtered = normalize_data(np.array(y_filtered))
+    normalized_y_filtered = y_filtered * 1000
 
     # define plot settings
     fig = plt.figure(figsize=(18,6), tight_layout=True)
@@ -109,7 +110,7 @@ def main():
         data = df.iloc[:int(i+1)]
         plt.plot(data['x'], data['y'], color='red')
         plt.xlabel('Time (s)')
-        plt.ylabel('Amplitude')
+        plt.ylabel('Filtered Translation (mm)')
         plt.xlim([xmin, xmax])
         plt.ylim([ymin, ymax])
 
