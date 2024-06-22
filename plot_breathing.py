@@ -82,9 +82,9 @@ def main():
     # plt.ylabel('Amplitude')
 
     # show the filtered plot
-    normalized_y_filtered = normalize_data(np.array(y_filtered))
+    # normalized_y_filtered = normalize_data(np.array(y_filtered))
     # plt.subplot(3, 1, 2)
-    plt.plot(uniform_timestamps, normalized_y_filtered)
+    plt.plot(uniform_timestamps, y_filtered * 1000)
     ta = None
     tb = None
     color = None
@@ -108,8 +108,11 @@ def main():
             ta = None
             tb = None
             color = None
-    plt.xlabel('Time (s)')
-    plt.ylabel('Amplitude')
+    plt.xlabel('Time (s)', fontsize=10)
+    plt.ylabel('Filtered Translation (mm)', fontsize=10)
+    # make the axis labels bigger
+    plt.xticks(fontsize=8)
+    plt.yticks(fontsize=8)
 
     # calculate the Lomb-Scargle periodogram
     f = np.linspace(0.01, 2, 1000)  # Frequency range
