@@ -332,8 +332,8 @@ def main(accumulation=False):
             pcd_in_lidar = np.asarray(pcd_in_lidar.points)
 
             # load the camera parameters
-            intrinsic = make_intrinsic(fx, fy, cx, cy)
-            extrinsic = make_extrinsic(rot_mat, translation)
+            intrinsic = make_intrinsic_mat(fx, fy, cx, cy)
+            extrinsic = make_extrinsic_mat(rot_mat, translation)
 
             # project the point cloud to camera and its image sensor
             pcd_in_cam = lidar2cam_projection(pcd_in_lidar, extrinsic)

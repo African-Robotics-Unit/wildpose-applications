@@ -28,10 +28,10 @@ def equal_3d_aspect(ax):
 
 
 def main():
-    pcd_fpath = './data/calibration/livox_frame_1675521461_933804176.pcd'
-    xlim = None # (-100, -0.1)
-    ylim = None # (-100, 100)
-    zlim = None # (18.6, 18.9)
+    pcd_fpath = './data/giraffe_stand/textured_pcds/coloured_accumulation.pcd'
+    xlim = (-100, -0.1)
+    ylim = (-100, 100)
+    zlim = (18.6, 18.9)
 
     # load data
     pcd = o3d.io.read_point_cloud(pcd_fpath)
