@@ -13,6 +13,7 @@ import matplotlib.pyplot as plt
 from matplotlib.pyplot import figure
 import scienceplots
 import plotly.graph_objs as go
+import plotly.express as px
 
 from utils.file_loader import load_camera_parameters, load_rgb_img, load_pcd
 from utils.camera import make_intrinsic_mat, make_extrinsic_mat
@@ -190,12 +191,25 @@ def main():
     # calculate the precision with stationary individuals
     # ID 4&8
     # Frame: 39--99
-    precisions, total_precision = calculate_precision({
+    stationary_ids ={
         4: dfs[4][39:99+1],
         8: dfs[8][39:99+1],
-    })
+    }
+    precisions, total_precision = calculate_precision(stationary_ids)
     print(precisions)
     print(f'total precision: {total_precision}')
+    # show the xyz precisions of the stationary individuals
+    for k, v in stationary_ids.items():
+        # calculate the mean
+        mean_x = np.mean(v['x'])
+        mean_y = np.mean(v['y'])
+        mean_z = np.mean(v['z'])
+        print(f'{k}: {mean_x}, {mean_y}, {mean_z}')
+        # calculate the standard deviation
+        std_x = np.std(v['x'])
+        std_y = np.std(v['y'])
+        std_z = np.std(v['z'])
+        print(f'{k}: {std_x}, {std_y}, {std_z}')
 
     # plot the data
     fig = go.Figure()
